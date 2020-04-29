@@ -1,0 +1,16 @@
+name:                css-normalize
+version:             0.1.0.0
+license:             BSD3
+author:              "Szymon Kozłowski"
+maintainer:          "szymek.kozlowski1@gmail.com"
+
+description:         Package for normalizing CSS files.
+
+dependencies:
+- base
+- css-syntax
+- megaparsec
+- text
+
+library:
+  source-dirs: src
