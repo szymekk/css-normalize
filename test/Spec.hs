@@ -30,7 +30,14 @@ spec =
           `shouldParse` Declaration (Key "key") [i "a"]
         testParse parseOneDeclaration [i "key", ws, Colon, ws, i "a", ws, Semicolon, ws]
           `shouldParse` Declaration (Key "key") [i "a"]
+      it "parses qualified rule" $ do
+        testParse parseQualifiedRule [i "body", curlyL, curlyR]
+          `shouldParse` QualifiedRule [i "body"] []
+        testParse parseQualifiedRule [i "body", curlyL, i "key", Colon, i "v", curlyR]
+          `shouldParse` QualifiedRule [i "body"] [Declaration (Key "key") [i "v"]]
   where
     testParse p = parse p ""
     ws = Whitespace
     i = Ident
+    curlyL = LeftCurlyBracket
+    curlyR = RightCurlyBracket

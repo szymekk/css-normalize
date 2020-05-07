@@ -3,8 +3,10 @@
 module Parse
   ( parseDeclarationValues,
     parseOneDeclaration,
+    parseQualifiedRule,
     Declaration (..),
     Key (..),
+    QualifiedRule (..),
   )
 where
 
@@ -17,6 +19,9 @@ import Text.Megaparsec
 import TokenStream ()
 
 type Parser = Parsec Void [CSS.Token]
+
+data QualifiedRule = QualifiedRule [CSS.Token] [Declaration]
+  deriving (Eq, Show)
 
 newtype Key = Key Text
   deriving (Show, Eq)
@@ -51,3 +56,15 @@ parseOneDeclaration = do
   void $ single Colon
   void manyWs
   Declaration propertyName <$> parseDeclarationValues
+
+parseQualifiedRule :: Parser QualifiedRule
+parseQualifiedRule = do
+  prelude <- manyTill anySingle $ try (manyWs *> single LeftCurlyBracket)
+  void manyWs
+  QualifiedRule prelude <$> parseDeclarationList
+
+parseDeclarationList :: Parser [Declaration]
+parseDeclarationList = do
+  declarations <- sepEndBy parseOneDeclaration (try pDeclarationSeparator)
+  void $ manyWs *> single RightCurlyBracket
+  return declarations
