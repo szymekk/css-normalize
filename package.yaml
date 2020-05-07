@@ -11,6 +11,7 @@ dependencies:
 - css-syntax
 - megaparsec
 - text
+- containers
 
 library:
   source-dirs: src
@@ -24,3 +25,16 @@ ghc-options:
     - -Wincomplete-uni-patterns
     - -Wredundant-constraints
     - -fno-warn-orphans
+
+tests:
+  css-normalize-test:
+    main:                Spec.hs
+    source-dirs:         test
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - css-normalize
+    - hspec
+    - hspec-megaparsec
