@@ -80,6 +80,97 @@ spec =
         parseText parseQualifiedRule "a{k1:v1;k2:v2;} " `shouldParse` parsedRule2
         parseText parseQualifiedRule "a {k1 : v1 ; k2 : v2 } " `shouldParse` parsedRule2
         parseText parseQualifiedRule "a {k1 : v1 ; k2 : v2 ; } " `shouldParse` parsedRule2
+    describe "parses block between curly brackets" $ do
+      it "from tokens" $ do
+        parse' parseBlockCurly `shouldFailOn` []
+        parse' parseBlockCurly `shouldFailOn` [Comma, Comma, Comma]
+        parse' parseBlockCurly `shouldFailOn` [close, open] -- reversed brackets no good.
+        parse' parseBlockCurly `shouldFailOn` [open, a, open, a, a, a, close]
+        parseInitial parseBlockCurly [open, a, open, a, a, a, close, close, close] `succeedsLeaving` [close]
+        parseInitial parseBlockCurly [open, close] `succeedsLeaving` []
+        parseInitial parseBlockCurly [open, close, close] `succeedsLeaving` [close]
+        parse' parseBlockCurly `shouldSucceedOn` [open, a, a, a, close]
+        parse' parseBlockCurly `shouldSucceedOn` [open, open, a, a, a, close, close]
+        parse' parseBlockCurly `shouldSucceedOn` [open, a, a, open, a, close, a, a, close]
+        parse' parseBlockCurly `shouldSucceedOn` [open, a, a, open, a, open, a, a, close, close, open, a, close, a, close]
+        parse' parseBlockCurly `shouldSucceedOn` [open, a, a, open, a, close, a, a, close, a]
+        parse' parseBlockCurly `shouldFailOn` [opR, opS, open, close, opR, open, close, opS, clS, clR, clS, clR]
+        parse' parseBlockCurly `shouldSucceedOn` [open, opR, opS, clS, open, opS, clS, opR, clR, close, clR, close]
+        parse' parseBlockCurly `shouldSucceedOn` [open, close, opR, open, close, opS, clS, clR]
+      it "from Text" $ do
+        parse' parseBlockCurly `shouldFailOn` t ""
+        parse' parseBlockCurly `shouldFailOn` t "abc"
+        parse' parseBlockCurly `shouldFailOn` t "}{" -- reversed brackets no good.
+        parse' parseBlockCurly `shouldFailOn` t "{a{abc}"
+        parseInitial parseBlockCurly (t "{a{abc}}}") `succeedsLeaving` t "}"
+        parseInitial parseBlockCurly (t "{}") `succeedsLeaving` t ""
+        parseInitial parseBlockCurly (t "{}}") `succeedsLeaving` t "}"
+        parse' parseBlockCurly `shouldSucceedOn` t "{some}"
+        parse' parseBlockCurly `shouldSucceedOn` t "{[some]}"
+        parse' parseBlockCurly `shouldSucceedOn` t "{some[nonsense]with}"
+        parse' parseBlockCurly `shouldSucceedOn` t "{some[no[nsense]](w)ith}"
+        parse' parseBlockCurly `shouldSucceedOn` t "{some[nonsense]with}brackets"
+        parse' parseBlockCurly `shouldFailOn` t "([{}({}[])])"
+        parse' parseBlockCurly `shouldSucceedOn` t "{([]{[]()})}"
+        parse' parseBlockCurly `shouldSucceedOn` t "{}({}[])"
+    it "parses unknown at-rules" $ do
+      parse' (parseUnknownAtRule "name") `shouldSucceedOn` t " a b{k:v}"
+      parse' (parseUnknownAtRule "name") `shouldSucceedOn` t " {}"
+      parse' (parseUnknownAtRule "name") (t " a b{k:v}") `shouldParse` BlockAtRule "name" [ws, a, ws, b] [Ident "k", Colon, Ident "v"]
+    describe "stylesheets" $ do
+      it "parses valid stylesheets" $ do
+        parse' parseStylesheet `shouldSucceedOn` t "body{k:v} @rule a b{ss}"
+        parse' parseStylesheet `shouldSucceedOn` t "@rule a b{ss!;x} body{k:v}"
+        parse' parseStylesheet `shouldSucceedOn` t "body{k:v} @rule a b{ss'xyz'}"
+        parse' parseStylesheet `shouldSucceedOn` t "@rule a b{ss!;''} body{k:v a}"
+        parse' parseStylesheet `shouldSucceedOn` t " body x {k1:v1;k2:v2} @rule{...} "
+        parse' parseStylesheet `shouldSucceedOn` t " body x {k1:v1;k2:v2} @media{} "
+        parse' parseStylesheet `shouldSucceedOn` t " body x {k1:v1;k2:v2} @media{ } "
+      it "fails on stylesheet with invalid media rule" $
+        parse' parseStylesheet `shouldFailOn` t " body x {k1:v1;k2:v2} @media{...} "
+      it "parses stylesheet" $
+        parse' parseStylesheet (t "@media{}") `shouldParse` Stylesheet [AtRule $ Media $ MediaRule [] (Stylesheet [])]
+    it "parses media rule" $ do
+      parse' parseMediaRulePreludeBody `shouldSucceedOn` t "a b { body x {k1:v1;k2:v2} @rule{...} } "
+      parse' parseMediaRulePreludeBody (t "a b { body x {k1:v1;k2:v2} @rule{...} } ")
+        `shouldParse` MediaRule
+          [a, ws, b]
+          ( Stylesheet
+              [ StyleRule $
+                  QualifiedRule
+                    [Ident "body", ws, Ident "x"]
+                    [Declaration (Key "k1") [Ident "v1"], Declaration (Key "k2") [Ident "v2"]],
+                AtRule $ BlockAtRule "rule" [] [dot, dot, dot]
+              ]
+          )
+      parse' parseMediaRulePreludeBody `shouldFailOn` t "a b { body x {k1:v1;k2:v2} @media{...} }"
+      parse' parseMediaRulePreludeBody (t "a b { body x {k1:v1;k2:v2} @rule {...} @media { } }")
+        `shouldParse` MediaRule
+          [a, ws, b]
+          ( Stylesheet
+              [ StyleRule $
+                  QualifiedRule
+                    [Ident "body", ws, Ident "x"]
+                    [Declaration (Key "k1") [Ident "v1"], Declaration (Key "k2") [Ident "v2"]],
+                AtRule $ BlockAtRule "rule" [ws] [dot, dot, dot],
+                (AtRule . Media) $ MediaRule [] (Stylesheet [])
+              ]
+          )
+      let mediaResult =
+            MediaRule
+              [a, ws, b]
+              ( Stylesheet
+                  [ StyleRule $
+                      QualifiedRule
+                        [Ident "body", ws, Ident "x"]
+                        [Declaration (Key "k1") [Ident "v1"], Declaration (Key "k2") [Ident "v2"]],
+                    AtRule $ BlockAtRule "rule" [] [dot, dot, dot]
+                  ]
+              )
+      parse' parseMediaRule (t "@media a b{body x{k1:v1;k2:v2}@rule{...}}")
+        `shouldParse` mediaResult
+      parse' parseMediaRule (t "@media a b { body x { k1 : v1 ; k2 : v2 } @rule{...} } ")
+        `shouldParse` mediaResult
   where
     testParse p = parse p ""
     shouldFailOnText x text = shouldFailOn x (tokenize text)
@@ -89,3 +180,17 @@ spec =
     d = Delim
     curlyL = LeftCurlyBracket
     curlyR = RightCurlyBracket
+    parse' p = parse p ""
+    t = tokenize
+    open = LeftCurlyBracket
+    close = RightCurlyBracket
+    -- opC = LeftCurlyBracket
+    -- clC = RightCurlyBracket
+    opR = LeftParen
+    clR = RightParen
+    opS = LeftSquareBracket
+    clS = RightSquareBracket
+    a = Ident "a"
+    b = Ident "b"
+    dot = Delim '.'
+    parseInitial p input = runParser' p (initialState input)
