@@ -85,7 +85,7 @@ parseDeclarationList = do
 data BracketType = Round | Curly | Square
   deriving (Eq, Show)
 
-data Block = Block [CSS.Token]
+newtype Block = Block [CSS.Token]
   deriving (Eq, Show)
 
 parseBlockCurly :: Parser Block
@@ -163,7 +163,7 @@ pOpen = token predicate Set.empty <?> "opening"
 data StylesheetElement = StyleRule QualifiedRule | AtRule AtRule
   deriving (Eq, Show)
 
-data Stylesheet = Stylesheet [StylesheetElement]
+newtype Stylesheet = Stylesheet [StylesheetElement]
   deriving (Eq, Show)
 
 pAtKeyword :: Parser Text
