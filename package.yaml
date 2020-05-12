@@ -26,6 +26,17 @@ ghc-options:
     - -Wredundant-constraints
     - -fno-warn-orphans
 
+executables:
+  css-normalize-exe:
+    main:                Main.hs
+    source-dirs:         app
+    ghc-options:
+    - -threaded
+    - -rtsopts
+    - -with-rtsopts=-N
+    dependencies:
+    - css-normalize
+
 tests:
   css-normalize-test:
     main:                Spec.hs

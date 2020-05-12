@@ -17,6 +17,7 @@ module Parse
     StylesheetElement (..),
     Stylesheet (..),
     AtRule (..),
+    Parser,
   )
 where
 
