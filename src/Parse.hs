@@ -122,12 +122,7 @@ pSimpleBracketType = do
   return bracketType
 
 pSimple :: Parser ()
-pSimple = do
-  bracketType <- pOpen
-  void $ case bracketType of
-    Round -> single RightParen
-    Curly -> single RightCurlyBracket
-    Square -> single RightSquareBracket
+pSimple = void pSimpleBracketType
 
 pEnclosed :: Parser [CSS.Token]
 pEnclosed = snd <$> pEnclosedWithBracketType
