@@ -4,20 +4,12 @@ module Parse
   ( parseDeclarationValues,
     parseOneDeclaration,
     parseQualifiedRule,
-    Declaration (..),
-    Key (..),
-    QualifiedRule (..),
     parseBlockCurly,
     parseStylesheet,
     pSimple,
     parseUnknownAtRule,
     parseMediaRule,
     parseMediaRulePreludeBody,
-    MediaRule (..),
-    StylesheetElement (..),
-    Stylesheet (..),
-    AtRule (..),
-    Parser,
   )
 where
 
@@ -26,20 +18,9 @@ import Data.CSS.Syntax.Tokens as CSS
 import Data.Functor
 import Data.Set as Set hiding (foldr, null)
 import Data.Text hiding (concat)
-import Data.Void
 import Text.Megaparsec
 import TokenStream ()
-
-type Parser = Parsec Void [CSS.Token]
-
-data QualifiedRule = QualifiedRule [CSS.Token] [Declaration]
-  deriving (Eq, Show)
-
-newtype Key = Key Text
-  deriving (Show, Eq)
-
-data Declaration = Declaration Key [CSS.Token]
-  deriving (Eq, Show)
+import Types
 
 manyWs :: Parser [CSS.Token]
 manyWs = many (single Whitespace)
@@ -82,12 +63,6 @@ parseDeclarationList = do
   declarations <- sepEndBy parseOneDeclaration (try pDeclarationSeparator)
   void $ manyWs *> single RightCurlyBracket
   return declarations
-
-data BracketType = Round | Curly | Square
-  deriving (Eq, Show)
-
-newtype Block = Block [CSS.Token]
-  deriving (Eq, Show)
 
 parseBlockCurly :: Parser Block
 parseBlockCurly = do
@@ -156,23 +131,11 @@ pOpen = token predicate Set.empty <?> "opening"
     predicate LeftSquareBracket = Just Square
     predicate _ = Nothing
 
-data StylesheetElement = StyleRule QualifiedRule | AtRule AtRule
-  deriving (Eq, Show)
-
-newtype Stylesheet = Stylesheet [StylesheetElement]
-  deriving (Eq, Show)
-
 pAtKeyword :: Parser Text
 pAtKeyword = token test Set.empty <?> "AtKeyword"
   where
     test (AtKeyword str) = Just str
     test _ = Nothing
-
-data AtRule = Media MediaRule | BlockAtRule Text [CSS.Token] [CSS.Token] | SemicolonAtRule Text [CSS.Token]
-  deriving (Eq, Show)
-
-data MediaRule = MediaRule [CSS.Token] Stylesheet
-  deriving (Eq, Show)
 
 parseUnknownAtRule :: Text -> Parser AtRule
 parseUnknownAtRule name = do

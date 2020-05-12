@@ -7,7 +7,7 @@ where
 
 import Data.CSS.Syntax.Tokens as CSS
 import Data.Text as T
-import Parse
+import Types
 
 indentText :: Text
 indentText = "    "
