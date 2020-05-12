@@ -28,7 +28,7 @@ newtype Key = Key Text
 data Declaration = Declaration Key [CSS.Token]
   deriving (Eq, Show)
 
-data BracketType = Round | Curly | Square
+data BracketType = FunctionToken Text | Round | Curly | Square
   deriving (Eq, Show)
 
 newtype Block = Block [CSS.Token]

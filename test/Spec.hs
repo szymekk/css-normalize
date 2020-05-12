@@ -81,7 +81,7 @@ spec =
         parseText parseQualifiedRule "a{k1:v1;k2:v2;} " `shouldParse` parsedRule2
         parseText parseQualifiedRule "a {k1 : v1 ; k2 : v2 } " `shouldParse` parsedRule2
         parseText parseQualifiedRule "a {k1 : v1 ; k2 : v2 ; } " `shouldParse` parsedRule2
-    describe "parses block between curly brackets" $ do
+    describe "parse blocks between curly brackets" $ do
       it "from tokens" $ do
         parse' parseBlockCurly `shouldFailOn` []
         parse' parseBlockCurly `shouldFailOn` [Comma, Comma, Comma]
@@ -104,16 +104,25 @@ spec =
         parse' parseBlockCurly `shouldFailOn` t "}{" -- reversed brackets no good.
         parse' parseBlockCurly `shouldFailOn` t "{a{abc}"
         parseInitial parseBlockCurly (t "{a{abc}}}") `succeedsLeaving` t "}"
+        parseInitial parseBlockCurly (t "{a(abc)}}") `succeedsLeaving` t "}"
         parseInitial parseBlockCurly (t "{}") `succeedsLeaving` t ""
         parseInitial parseBlockCurly (t "{}}") `succeedsLeaving` t "}"
+        parseInitial parseBlockCurly (t "{}function(") `succeedsLeaving` t "function("
         parse' parseBlockCurly `shouldSucceedOn` t "{some}"
         parse' parseBlockCurly `shouldSucceedOn` t "{[some]}"
+        parse' parseBlockCurly `shouldSucceedOn` t "{func(some)}"
         parse' parseBlockCurly `shouldSucceedOn` t "{some[nonsense]with}"
+        parse' parseBlockCurly `shouldSucceedOn` t "{some func(nonsense)with}"
         parse' parseBlockCurly `shouldSucceedOn` t "{some[no[nsense]](w)ith}"
+        parse' parseBlockCurly `shouldSucceedOn` t "{some[no[nsense]]func(w)ith}"
         parse' parseBlockCurly `shouldSucceedOn` t "{some[nonsense]with}brackets"
+        parse' parseBlockCurly `shouldSucceedOn` t "{some func(nons[e]nse)wi[t]h}brackets"
         parse' parseBlockCurly `shouldFailOn` t "([{}({}[])])"
+        parse' parseBlockCurly `shouldFailOn` t "func([{}({}[])])"
         parse' parseBlockCurly `shouldSucceedOn` t "{([]{[]()})}"
+        parse' parseBlockCurly `shouldSucceedOn` t "{([]{func()()})}"
         parse' parseBlockCurly `shouldSucceedOn` t "{}({}[])"
+        parse' parseBlockCurly `shouldSucceedOn` t "{}(func({})[])"
     it "parses unknown at-rules" $ do
       parse' (parseUnknownAtRule "name") `shouldSucceedOn` t " a b{k:v}"
       parse' (parseUnknownAtRule "name") `shouldSucceedOn` t " {}"
@@ -127,6 +136,11 @@ spec =
         parse' parseStylesheet `shouldSucceedOn` t " body x {k1:v1;k2:v2} @rule{...} "
         parse' parseStylesheet `shouldSucceedOn` t " body x {k1:v1;k2:v2} @media{} "
         parse' parseStylesheet `shouldSucceedOn` t " body x {k1:v1;k2:v2} @media{ } "
+      it "parses stylesheets containing function tokens" $ do
+        parse' parseStylesheet `shouldSucceedOn` t "body {k:func(a,b,c)}"
+        parse' parseStylesheet `shouldSucceedOn` t "@media{ body{ key: func() } } "
+      it "fails on unbalanced brackets" $
+        parse' parseStylesheet `shouldFailOn` t "body {k:v)}"
       it "fails on stylesheet with invalid media rule" $
         parse' parseStylesheet `shouldFailOn` t " body x {k1:v1;k2:v2} @media{...} "
       it "parses stylesheet" $
