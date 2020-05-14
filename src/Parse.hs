@@ -2,9 +2,9 @@
 
 module Parse
   ( parseDeclarationValues,
+    parseBlockCurly,
     parseOneDeclaration,
     parseQualifiedRule,
-    parseBlockCurly,
     parseStylesheet,
     parseUnknownAtRule,
     parseMediaRule,
@@ -12,13 +12,12 @@ module Parse
   )
 where
 
+import Balanced
 import Control.Monad
 import Data.CSS.Syntax.Tokens as CSS
-import Data.Functor
 import Data.Set as Set hiding (foldr, null)
 import Data.Text hiding (concat)
 import Text.Megaparsec
-import TokenStream ()
 import Types
 
 manyWs :: Parser [CSS.Token]
@@ -65,98 +64,12 @@ parseDeclarationList = do
 
 -- | Parse a list of tokens enclosed by a pair of curly brackets.
 -- Any inner bracket tokens must be properly balanced.
--- Each 'LeftCurlyBracket' must be closed by a 'RightCurlyBracket'.
--- Each 'LeftSquareBracket' must be closed by a 'RightSquareBracket'.
--- Each 'LeftParen' must be closed by a 'RightParen'.
--- Each 'Function' must be closed by a 'RightParen'.
--- Otherwise the inner tokens are arbitrary.
 parseBlockCurly :: Parser Block
-parseBlockCurly = do
-  void $ lookAhead (single LeftCurlyBracket)
-  innerTokens <-
-    try (pSimple <?> "simple") $> []
-      <|> (pEnclosed <?> "enclosed")
-  return $ Block innerTokens
-
-pSimpleWithOuterBrackets :: Parser [CSS.Token]
-pSimpleWithOuterBrackets = do
-  (opening, closing) <-
-    try ((,) <$> single LeftCurlyBracket <*> single RightCurlyBracket)
-      <|> try ((,) <$> single LeftSquareBracket <*> single RightSquareBracket)
-      <|> ((,) <$> single LeftParen <*> single RightParen)
-  return [opening, closing]
-
-pSimple :: Parser ()
-pSimple = void pSimpleWithOuterBrackets
-
-pEnclosed :: Parser [CSS.Token]
-pEnclosed = snd <$> pEnclosedWithBracketType
-
-pBlockBeginning :: Parser BracketType
-pBlockBeginning = token test Set.empty <?> "function"
+parseBlockCurly =
+  Block . unBalanced <$> betweenCurly manyBalanced
   where
-    test LeftCurlyBracket = Just Curly
-    test LeftSquareBracket = Just Square
-    test LeftParen = Just Round
-    test (Function name) = Just (FunctionToken name)
-    test _ = Nothing
-
-pEnclosedWithOuterBrackets :: Parser [CSS.Token]
-pEnclosedWithOuterBrackets = do
-  (bracketType, ts) <- pEnclosedWithBracketType
-  let (opening, closing) = getBrackets bracketType
-  return $ opening : ts ++ [closing]
-  where
-    getBrackets :: BracketType -> (CSS.Token, CSS.Token)
-    getBrackets (FunctionToken name) = (Function name, RightParen)
-    getBrackets Round = (LeftParen, RightParen)
-    getBrackets Curly = (LeftCurlyBracket, RightCurlyBracket)
-    getBrackets Square = (LeftSquareBracket, RightSquareBracket)
-
-pEnclosedWithBracketType :: Parser (BracketType, [CSS.Token])
-pEnclosedWithBracketType = do
-  blockType <- pBlockBeginning
-  tokenList <- parseSerial
-  void $ case blockType of
-    FunctionToken _ -> single RightParen
-    Round -> single RightParen
-    Curly -> single RightCurlyBracket
-    Square -> single RightSquareBracket
-  return (blockType, tokenList)
-
-parseSerial :: Parser [CSS.Token]
-parseSerial = do
-  listOfLists <-
-    many $
-      try pSimpleFunction
-        <|> try pSimpleWithOuterBrackets
-        <|> try (fmap pure nonBracket)
-        <|> pEnclosedWithOuterBrackets
-  return (concat listOfLists)
-
-nonBracket :: Parser CSS.Token
-nonBracket = token test Set.empty <?> "non-bracket"
-  where
-    test LeftCurlyBracket = Nothing
-    test RightCurlyBracket = Nothing
-    test LeftSquareBracket = Nothing
-    test RightSquareBracket = Nothing
-    test LeftParen = Nothing
-    test RightParen = Nothing
-    test (Function _) = Nothing
-    test t = Just t
-
-pFunction :: Parser CSS.Token
-pFunction = token test Set.empty <?> "function"
-  where
-    test (Function name) = Just (Function name)
-    test _ = Nothing
-
-pSimpleFunction :: Parser [CSS.Token]
-pSimpleFunction = do
-  function <- pFunction
-  closing <- single RightParen
-  return [function, closing]
+    manyBalanced = someBalanced <|> return mkEmptyBalanced
+    betweenCurly = between (single LeftCurlyBracket) (single RightCurlyBracket)
 
 pAtKeyword :: Parser Text
 pAtKeyword = token test Set.empty <?> "AtKeyword"
