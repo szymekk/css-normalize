@@ -1,34 +1,28 @@
-{-# LANGUAGE OverloadedStrings #-}
-
-import Data.CSS.Syntax.Tokens (Token, tokenize)
-import Data.Text (Text)
+import Data.CSS.Syntax.Tokens (tokenize)
 import qualified Data.Text.IO as T
 import Normalize
 import Parse
 import Render
 import System.Environment (getArgs)
 import Text.Megaparsec (errorBundlePretty, parse)
+import Types
 
 main :: IO ()
 main = do
   args <- getArgs
-  let source :: Either String (IO Text)
-      source = T.readFile <$> safeHead args
-      tokens :: Either String (IO [Token])
-      tokens = fmap (fmap tokenize) source
-  case tokens of
-    Right ts ->
-      either putStrLn T.putStrLn . parseAndNormalizeAndRender =<< ts
-    Left _ -> putStrLn "usage: app <filename>"
+  let maybeFilename = safeHead args
+  maybe (putStrLn "usage: app <filename>") processFile maybeFilename
   where
-    pElem :: Parser a -> [Token] -> Either String a
-    pElem p ts = case parse p "" ts of
-      Right element -> Right element
-      Left parseErr -> Left (errorBundlePretty parseErr)
-    tryParseElemToText r p = fmap r . pElem p
-    parseAndNormalizeAndRender :: [Token] -> Either String Text
-    parseAndNormalizeAndRender = tryParseElemToText (renderStylesheet 0) (normalizeStylesheet <$> parseStylesheet)
+    processFile :: FilePath -> IO ()
+    processFile fname = do
+      parsedStylesheet <- parseFromFile parseStylesheet fname
+      let normalized = fmap normalizeStylesheet parsedStylesheet
+      either (putStrLn . errorBundlePretty) displayStylesheet normalized
+    parseFromFile p file = parse p file <$> tokensFromFile file
+    tokensFromFile file = tokenize <$> T.readFile file
+    displayStylesheet :: Stylesheet -> IO ()
+    displayStylesheet = T.putStrLn . renderStylesheet 0
 
-safeHead :: [a] -> Either String a
-safeHead [] = Left "empty list"
-safeHead (x : _xs) = Right x
+safeHead :: [a] -> Maybe a
+safeHead [] = Nothing
+safeHead (x : _xs) = Just x
