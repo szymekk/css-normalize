@@ -22,7 +22,7 @@ data QualifiedRule = QualifiedRule [Selector] [Declaration]
   deriving (Eq, Show)
 
 newtype Key = Key Text
-  deriving (Eq, Show)
+  deriving (Eq, Ord, Show)
 
 data Declaration = Declaration Key Balanced
   deriving (Eq, Show)
