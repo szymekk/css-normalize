@@ -9,6 +9,7 @@ module Parse
     parseUnknownAtRule,
     parseMediaRule,
     parseMediaRulePreludeBody,
+    Parser,
   )
 where
 
@@ -17,6 +18,7 @@ import Control.Monad
 import Data.CSS.Syntax.Tokens as CSS
 import Data.Set as Set hiding (foldr, null)
 import Data.Text hiding (concat)
+import Parser
 import Text.Megaparsec
 import Types
 

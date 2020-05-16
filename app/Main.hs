@@ -7,7 +7,6 @@ import Parse
 import Render
 import System.Environment (getArgs)
 import Text.Megaparsec (errorBundlePretty, parse)
-import Types
 
 main :: IO ()
 main = do

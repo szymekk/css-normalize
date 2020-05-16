@@ -9,9 +9,10 @@ where
 import Control.Monad
 import Data.CSS.Syntax.Tokens as CSS
 import Data.Set as Set
+import Parser
 import Text.Megaparsec
 import TokenStream ()
-import Types (BracketType (..), Parser)
+import Types (BracketType (..))
 
 -- | Balanced represents a list of tokens with the additional constraint
 -- that bracket-like tokens are balanced. A sequence is balanced if for

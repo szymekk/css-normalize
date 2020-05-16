@@ -8,16 +8,11 @@ module Types
     AtRule (..),
     BracketType (..),
     Block (..),
-    Parser,
   )
 where
 
 import Data.CSS.Syntax.Tokens as CSS
 import Data.Text
-import Data.Void
-import Text.Megaparsec
-
-type Parser = Parsec Void [CSS.Token]
 
 data QualifiedRule = QualifiedRule [CSS.Token] [Declaration]
   deriving (Eq, Show)
