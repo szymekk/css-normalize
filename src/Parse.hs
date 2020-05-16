@@ -70,7 +70,7 @@ parseBlockCurly :: Parser Block
 parseBlockCurly =
   Block . unBalanced <$> betweenCurly manyBalanced
   where
-    manyBalanced = someBalanced <|> return mkEmptyBalanced
+    manyBalanced = someBalanced <|> return mempty
     betweenCurly = between (single LeftCurlyBracket) (single RightCurlyBracket)
 
 pAtKeyword :: Parser Text

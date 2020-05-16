@@ -3,6 +3,7 @@
 module BalancedSpec where
 
 import Balanced
+import Balanced.Internal
 import Data.CSS.Syntax.Tokens
 import Test.Hspec
 import Test.Hspec.Megaparsec
@@ -35,6 +36,13 @@ spec =
       parse' someBalanced `shouldFailOn` t "[(])"
       parse' someBalanced `shouldFailOn` t "a[b(c]d)e"
       parse' someBalanced `shouldFailOn` t "body {k:v)}"
+    it "monoid instance" $ do
+      unBalanced (mempty :: Balanced) `shouldBe` []
+      let ts1 = [Ident "a", Ident "b"]
+          ts2 = [Ident "c", Ident "d"]
+      unBalanced (UnsafeBalanced ts1 <> UnsafeBalanced ts2) `shouldBe` ts1 <> ts2
+      UnsafeBalanced ts1 <> mempty `shouldBe` UnsafeBalanced ts1
+      mempty <> UnsafeBalanced ts1 `shouldBe` UnsafeBalanced ts1
   where
     parse' p = parse p ""
     t = tokenize

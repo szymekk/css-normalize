@@ -1,6 +1,7 @@
+{-# LANGUAGE InstanceSigs #-}
+
 module Balanced
-  ( mkEmptyBalanced,
-    unBalanced,
+  ( unBalanced,
     Balanced,
     someBalanced,
   )
@@ -15,8 +16,12 @@ import Text.Megaparsec
 import TokenStream ()
 import Types (BracketType (..))
 
-mkEmptyBalanced :: Balanced
-mkEmptyBalanced = UnsafeBalanced []
+instance Semigroup Balanced where
+  b1 <> b2 = UnsafeBalanced $ unBalanced b1 <> unBalanced b2
+
+instance Monoid Balanced where
+  mempty :: Balanced
+  mempty = UnsafeBalanced []
 
 -- | Parse a matching pair of opening and closing bracket-like tokens.
 parseMatchingPair :: Parser Balanced
@@ -38,7 +43,7 @@ parseMatchingPair =
 -- | Parse a nonempty sequence of balanced tokens.
 someBalanced :: Parser Balanced
 someBalanced =
-  concatBalanced
+  mconcat
     <$> some
       ( try parseMatchingPair
           <|> try someNonBracket
@@ -71,9 +76,6 @@ parseEnclosedWithBracketType = do
   let closingBracket = snd (getBracketPair bracketType)
   void $ single closingBracket
   return (bracketType, innerTokens)
-
-concatBalanced :: [Balanced] -> Balanced
-concatBalanced bs = UnsafeBalanced $ concatMap unBalanced bs
 
 nonBracket :: Parser CSS.Token
 nonBracket = token test Set.empty <?> "non-bracket"
