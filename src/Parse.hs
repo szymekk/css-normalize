@@ -25,12 +25,10 @@ import Types
 manyWs :: Parser [CSS.Token]
 manyWs = many (single Whitespace)
 
-parseDeclarationValues :: Parser [CSS.Token]
+parseDeclarationValues :: Parser Balanced
 parseDeclarationValues =
-  manyTill parseDeclarationToken (lookAhead parseEnding)
+  manyBalancedTill (lookAhead parseEnding)
   where
-    parseDeclarationToken :: Parser CSS.Token
-    parseDeclarationToken = noneOf [LeftCurlyBracket, LeftSquareBracket, LeftParen]
     parseEnding = try pDeclarationSeparator <|> void (try (manyWs *> single RightCurlyBracket))
 
 pDeclarationSeparator :: Parser ()

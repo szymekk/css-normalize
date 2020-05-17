@@ -4,6 +4,7 @@ module Balanced
   ( unBalanced,
     Balanced,
     someBalanced,
+    manyBalancedTill,
   )
 where
 
@@ -11,10 +12,10 @@ import Balanced.Internal
 import Control.Monad
 import Data.CSS.Syntax.Tokens as CSS
 import Data.Set as Set
+import Data.Text
 import Parser
 import Text.Megaparsec
 import TokenStream ()
-import Types (BracketType (..))
 
 instance Semigroup Balanced where
   b1 <> b2 = UnsafeBalanced $ unBalanced b1 <> unBalanced b2
@@ -22,6 +23,9 @@ instance Semigroup Balanced where
 instance Monoid Balanced where
   mempty :: Balanced
   mempty = UnsafeBalanced []
+
+data BracketType = FunctionToken Text | Round | Curly | Square
+  deriving (Eq, Show)
 
 -- | Parse a matching pair of opening and closing bracket-like tokens.
 parseMatchingPair :: Parser Balanced
@@ -49,6 +53,20 @@ someBalanced =
           <|> try someNonBracket
           <|> parseEnclosed
       )
+
+manyBalancedTill :: Parser end -> Parser Balanced
+manyBalancedTill end = (mempty <$ end) <|> someBalancedTill end
+
+someBalancedTill :: Parser end -> Parser Balanced
+someBalancedTill end =
+  mconcat
+    <$> someTill balancedAtom end
+  where
+    balancedAtom :: Parser Balanced
+    balancedAtom =
+      try parseMatchingPair
+        <|> try (fmap (UnsafeBalanced . pure) nonBracket)
+        <|> parseEnclosed
 
 -- | Parse a sequence of non-bracket tokens.
 -- Such a list is trivially balanced.

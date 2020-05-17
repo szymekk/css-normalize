@@ -5,6 +5,7 @@ module Render
   )
 where
 
+import Balanced (unBalanced)
 import Data.CSS.Syntax.Tokens as CSS
 import Data.Text as T
 import Types
@@ -16,8 +17,8 @@ indent :: Int -> Text
 indent n = T.replicate n indentText
 
 renderDeclaration :: Int -> Declaration -> Text
-renderDeclaration n (Declaration (Key key) ts) =
-  indent n <> key <> ": " <> serialize ts <> ";"
+renderDeclaration n (Declaration (Key key) bs) =
+  indent n <> key <> ": " <> serialize (unBalanced bs) <> ";"
 
 renderQualifiedRule :: Int -> QualifiedRule -> Text
 renderQualifiedRule n (QualifiedRule prelude declarations) =

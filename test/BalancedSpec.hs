@@ -43,6 +43,27 @@ spec =
       unBalanced (UnsafeBalanced ts1 <> UnsafeBalanced ts2) `shouldBe` ts1 <> ts2
       UnsafeBalanced ts1 <> mempty `shouldBe` UnsafeBalanced ts1
       mempty <> UnsafeBalanced ts1 `shouldBe` UnsafeBalanced ts1
+    it "should parse input with balanced brackets" $ do
+      parse' (manyBalancedTill (single Semicolon)) `shouldSucceedOn` t ";"
+      parse' (manyBalancedTill (single Semicolon)) `shouldSucceedOn` t "abcdef;"
+      parse' (manyBalancedTill (single Semicolon)) `shouldSucceedOn` t "a{b{c}b}a;"
+      parse' (manyBalancedTill (single Semicolon)) `shouldSucceedOn` t "a{b{c}b};a"
+      parse' (manyBalancedTill (single Semicolon)) `shouldSucceedOn` t "a;[b(c]d)e"
+      parse' (manyBalancedTill (single Semicolon)) `shouldSucceedOn` t ";a[b(c]d)e"
+    it "should fail on input with unbalanced brackets" $ do
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t "a{b{c}"
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t "a{b{c}b;}a"
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t "a{b{c};b}a"
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t "a{b{c}b;}a"
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t "a[b(c;]d)e"
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t "a[b(;c;]d)e"
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t "a[b;(c]d)e"
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t "a[;b(c]d)e"
+    it "should fail on input lacking ending" $ do
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t ""
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t "abc"
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t "(abc)"
+      parse' (manyBalancedTill (single Semicolon)) `shouldFailOn` t "a{b{c}b}a"
   where
     parse' p = parse p ""
     t = tokenize

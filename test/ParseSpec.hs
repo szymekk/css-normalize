@@ -2,6 +2,8 @@
 
 module ParseSpec where
 
+import Balanced (unBalanced)
+import Balanced.Internal (Balanced (UnsafeBalanced))
 import Data.CSS.Syntax.Tokens
 import Data.List
 import Parse
@@ -15,32 +17,33 @@ spec =
   describe "Parse" $ do
     describe "parse tokens" $ do
       it "parses property values" $ do
-        testParse parseDeclarationValues [i "a", Semicolon]
+        let parseDeclarationValues' = fmap unBalanced parseDeclarationValues
+        testParse parseDeclarationValues' [i "a", Semicolon]
           `shouldParse` [i "a"]
-        testParse parseDeclarationValues [i "a", Semicolon, ws]
+        testParse parseDeclarationValues' [i "a", Semicolon, ws]
           `shouldParse` [i "a"]
-        testParse parseDeclarationValues [i "a", ws, Semicolon, ws]
+        testParse parseDeclarationValues' [i "a", ws, Semicolon, ws]
           `shouldParse` [i "a"]
-        testParse parseDeclarationValues [i "a", ws, i "b", Semicolon]
+        testParse parseDeclarationValues' [i "a", ws, i "b", Semicolon]
           `shouldParse` [i "a", ws, i "b"]
-        testParse parseDeclarationValues [i "a", ws, i "b", ws, Semicolon]
+        testParse parseDeclarationValues' [i "a", ws, i "b", ws, Semicolon]
           `shouldParse` [i "a", ws, i "b"]
       it "parses declarations" $ do
         testParse parseOneDeclaration [i "key", Colon, i "a", Semicolon]
-          `shouldParse` Declaration (Key "key") [i "a"]
+          `shouldParse` unsafeMkDecl "key" [i "a"]
         testParse parseOneDeclaration [i "key", ws, Colon, ws, i "a", ws, Semicolon, ws]
-          `shouldParse` Declaration (Key "key") [i "a"]
+          `shouldParse` unsafeMkDecl "key" [i "a"]
       it "parses qualified rule" $ do
         testParse parseQualifiedRule [i "body", curlyL, curlyR]
           `shouldParse` QualifiedRule [i "body"] []
         testParse parseQualifiedRule [i "body", curlyL, i "key", Colon, i "v", curlyR]
-          `shouldParse` QualifiedRule [i "body"] [Declaration (Key "key") [i "v"]]
+          `shouldParse` QualifiedRule [i "body"] [unsafeMkDecl "key" [i "v"]]
     describe "parse from text" $ do
       it "parses declaration" $ do
         let one = Number "1" (NVInteger 1)
             function = [Function "rgb", one, Comma, one, Comma, one, RightParen]
-            parsedDeclaration = Declaration (Key "color") function
-            parsedDeclaration' = Declaration (Key "color") (intersperse ws function)
+            parsedDeclaration = unsafeMkDecl "color" function
+            parsedDeclaration' = unsafeMkDecl "color" (intersperse ws function)
         parseText parseOneDeclaration "color:rgb(1,1,1);" `shouldParse` parsedDeclaration
         parseText parseOneDeclaration "color : rgb( 1 , 1 , 1 ) ;" `shouldParse` parsedDeclaration'
       it "parses qualified rule" $ do
@@ -48,12 +51,12 @@ spec =
         testParse parseQualifiedRule `shouldFailOnText` " "
         parseText parseQualifiedRule "body{}" `shouldParse` QualifiedRule [i "body"] []
         parseText parseQualifiedRule "body{/*test*/}" `shouldParse` QualifiedRule [i "body"] []
-        parseText parseQualifiedRule "*{k:v}" `shouldParse` QualifiedRule [d '*'] [Declaration (Key "k") [i "v"]]
+        parseText parseQualifiedRule "*{k:v}" `shouldParse` QualifiedRule [d '*'] [unsafeMkDecl "k" [i "v"]]
         let parsedRule =
               QualifiedRule
                 [i "a", ws, i "b"]
-                [ Declaration
-                    (Key "margin")
+                [ unsafeMkDecl
+                    "margin"
                     [ Dimension "30" (NVInteger 30) "px",
                       ws,
                       Number "0" (NVInteger 0)
@@ -73,8 +76,8 @@ spec =
         let parsedRule2 =
               QualifiedRule
                 [i "a"]
-                [ Declaration (Key "k1") [i "v1"],
-                  Declaration (Key "k2") [i "v2"]
+                [ unsafeMkDecl "k1" [i "v1"],
+                  unsafeMkDecl "k2" [i "v2"]
                 ]
         parseText parseQualifiedRule "a{k1:v1;k2:v2} " `shouldParse` parsedRule2
         parseText parseQualifiedRule "a{k1:v1;k2:v2;} " `shouldParse` parsedRule2
@@ -153,7 +156,7 @@ spec =
               [ StyleRule $
                   QualifiedRule
                     [Ident "body", ws, Ident "x"]
-                    [Declaration (Key "k1") [Ident "v1"], Declaration (Key "k2") [Ident "v2"]],
+                    [unsafeMkDecl "k1" [Ident "v1"], unsafeMkDecl "k2" [Ident "v2"]],
                 AtRule $ BlockAtRule "rule" [] [dot, dot, dot]
               ]
           )
@@ -165,7 +168,7 @@ spec =
               [ StyleRule $
                   QualifiedRule
                     [Ident "body", ws, Ident "x"]
-                    [Declaration (Key "k1") [Ident "v1"], Declaration (Key "k2") [Ident "v2"]],
+                    [unsafeMkDecl "k1" [Ident "v1"], unsafeMkDecl "k2" [Ident "v2"]],
                 AtRule $ BlockAtRule "rule" [ws] [dot, dot, dot],
                 (AtRule . Media) $ MediaRule [] (Stylesheet [])
               ]
@@ -177,7 +180,7 @@ spec =
                   [ StyleRule $
                       QualifiedRule
                         [Ident "body", ws, Ident "x"]
-                        [Declaration (Key "k1") [Ident "v1"], Declaration (Key "k2") [Ident "v2"]],
+                        [unsafeMkDecl "k1" [Ident "v1"], unsafeMkDecl "k2" [Ident "v2"]],
                     AtRule $ BlockAtRule "rule" [] [dot, dot, dot]
                   ]
               )
@@ -186,6 +189,7 @@ spec =
       parse' parseMediaRule (t "@media a b { body x { k1 : v1 ; k2 : v2 } @rule{...} } ")
         `shouldParse` mediaResult
   where
+    unsafeMkDecl key ts = Declaration (Key key) (UnsafeBalanced ts)
     testParse p = parse p ""
     shouldFailOnText x text = shouldFailOn x (tokenize text)
     parseText p text = parse p "" (tokenize text)

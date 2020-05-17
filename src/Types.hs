@@ -6,11 +6,11 @@ module Types
     StylesheetElement (..),
     Stylesheet (..),
     AtRule (..),
-    BracketType (..),
     Block (..),
   )
 where
 
+import Balanced
 import Data.CSS.Syntax.Tokens as CSS
 import Data.Text
 
@@ -20,10 +20,7 @@ data QualifiedRule = QualifiedRule [CSS.Token] [Declaration]
 newtype Key = Key Text
   deriving (Eq, Show)
 
-data Declaration = Declaration Key [CSS.Token]
-  deriving (Eq, Show)
-
-data BracketType = FunctionToken Text | Round | Curly | Square
+data Declaration = Declaration Key Balanced
   deriving (Eq, Show)
 
 newtype Block = Block [CSS.Token]
