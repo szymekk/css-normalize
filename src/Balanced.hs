@@ -22,6 +22,7 @@ import Types (BracketType (..), Parser)
 -- Each 'LeftParen' must be closed by a 'RightParen'.
 -- Each 'Function' must be closed by a 'RightParen'.
 newtype Balanced = UnsafeBalanced [CSS.Token]
+  deriving (Show)
 
 unBalanced :: Balanced -> [CSS.Token]
 unBalanced (UnsafeBalanced ts) = ts
