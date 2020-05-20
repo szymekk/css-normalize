@@ -130,6 +130,9 @@ spec =
       parse' (parseUnknownAtRule "name") `shouldSucceedOn` t " {}"
       parse' (parseUnknownAtRule "name") (t " a b{k:v}") `shouldParse` BlockAtRule "name" [ws, a, ws, b] [Ident "k", Colon, Ident "v"]
     describe "stylesheets" $ do
+      it "parses empty stylesheets" $ do
+        parse' parseStylesheet (t "") `shouldParse` Stylesheet []
+        parse' parseStylesheet (t " ") `shouldParse` Stylesheet []
       it "parses valid stylesheets" $ do
         parse' parseStylesheet `shouldSucceedOn` t "body{k:v} @rule a b{ss}"
         parse' parseStylesheet `shouldSucceedOn` t "@rule a b{ss!;x} body{k:v}"
