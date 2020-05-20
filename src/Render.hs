@@ -28,7 +28,7 @@ renderQualifiedRule n (QualifiedRule prelude declarations) =
     <> indent n
     <> "}"
   where
-    preludeText = serialize prelude
+    preludeText = intercalate ", " (serialize . unSelector <$> prelude)
     declarationsText = intercalate "\n" (fmap (renderDeclaration (n + 1)) declarations)
 
 renderAtRule :: Int -> AtRule -> Text

@@ -9,6 +9,8 @@ module Parse
     parseUnknownAtRule,
     parseMediaRule,
     parseMediaRulePreludeBody,
+    parseSelector,
+    parseSelectorsGroup,
     Parser,
   )
 where
@@ -50,9 +52,21 @@ parseOneDeclaration = do
 
 parseQualifiedRule :: Parser QualifiedRule
 parseQualifiedRule = do
-  prelude <- manyTill anySingle $ try (manyWs *> single LeftCurlyBracket)
+  selectors <- parseSelectorsGroup
+  void (single LeftCurlyBracket)
   void manyWs
-  QualifiedRule prelude <$> parseDeclarationList
+  QualifiedRule selectors <$> parseDeclarationList
+
+parseSelectorsGroup :: Parser [Selector]
+parseSelectorsGroup = parseSelector `sepBy1` single Comma
+
+-- | Parse a selector, i.e. a list of tokens. Any leading and trailing
+-- whitespace tokens are dropped.
+parseSelector :: Parser Selector
+parseSelector = fmap Selector $ manyWs *> someTill pSelectorToken (try pEnd)
+  where
+    pSelectorToken = noneOf [LeftCurlyBracket, RightCurlyBracket, Comma]
+    pEnd = manyWs <* notFollowedBy pSelectorToken
 
 parseDeclarationList :: Parser [Declaration]
 parseDeclarationList = do

@@ -7,6 +7,7 @@ module Types
     Stylesheet (..),
     AtRule (..),
     Block (..),
+    Selector (..),
   )
 where
 
@@ -14,7 +15,10 @@ import Balanced
 import Data.CSS.Syntax.Tokens as CSS
 import Data.Text
 
-data QualifiedRule = QualifiedRule [CSS.Token] [Declaration]
+newtype Selector = Selector {unSelector :: [CSS.Token]}
+  deriving (Eq, Show)
+
+data QualifiedRule = QualifiedRule [Selector] [Declaration]
   deriving (Eq, Show)
 
 newtype Key = Key Text
