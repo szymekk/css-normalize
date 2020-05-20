@@ -50,11 +50,9 @@ parseOneDeclaration = do
 
 parseQualifiedRule :: Parser QualifiedRule
 parseQualifiedRule = do
-  prelude <- manyTill nonCurly $ try (manyWs *> single LeftCurlyBracket)
+  prelude <- manyTill anySingle $ try (manyWs *> single LeftCurlyBracket)
   void manyWs
   QualifiedRule prelude <$> parseDeclarationList
-  where
-    nonCurly = noneOf [LeftCurlyBracket, RightCurlyBracket]
 
 parseDeclarationList :: Parser [Declaration]
 parseDeclarationList = do
@@ -106,8 +104,15 @@ parseStylesheetElement =
   (try (lookAhead pAtKeyword) >> parseAtRule)
     <|> StyleRule <$> parseQualifiedRule
 
+parseStylesheetEnd :: Parser a -> Parser Stylesheet
+parseStylesheetEnd pEnd = do
+  void manyWs
+  stylesheetElements <- sepEndBy (try parseStylesheetElement) manyWs
+  void pEnd
+  return (Stylesheet stylesheetElements)
+
 parseStylesheet :: Parser Stylesheet
-parseStylesheet = Stylesheet <$> (manyWs *> sepEndBy parseStylesheetElement manyWs)
+parseStylesheet = parseStylesheetEnd eof
 
 parseMediaRule :: Parser MediaRule
 parseMediaRule = do
@@ -120,5 +125,5 @@ parseMediaRulePreludeBody :: Parser MediaRule
 parseMediaRulePreludeBody = do
   void manyWs
   prelude <- manyTill anySingle $ try (manyWs *> single LeftCurlyBracket)
-  stylesheet <- parseStylesheet <* single RightCurlyBracket
+  stylesheet <- parseStylesheetEnd (single RightCurlyBracket)
   return $ MediaRule prelude stylesheet
