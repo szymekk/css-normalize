@@ -1,7 +1,4 @@
-module Normalize
-  ( normalizeStylesheet,
-  )
-where
+module Normalize where
 
 import Data.List
 import Types
@@ -17,12 +14,21 @@ normalizeStylesheetElement :: StylesheetElement -> StylesheetElement
 normalizeStylesheetElement (StyleRule rule) = StyleRule (normalizeStyleRule rule)
 normalizeStylesheetElement (AtRule rule) = AtRule (normalizeAtRule rule)
 
--- | Normalize a style rule by sorting its' declarations by keys.
+-- | Normalize a style rule by sorting its' declarations by keys
+-- and sorting the selectors of it's prelude.
 normalizeStyleRule :: QualifiedRule -> QualifiedRule
 normalizeStyleRule (QualifiedRule prelude declarations) =
-  QualifiedRule prelude (sortBy compareKeys declarations)
+  QualifiedRule prelude' declarations'
   where
+    prelude' = normalizeSelectorsGroup prelude
+    declarations' = sortBy compareKeys declarations
     compareKeys (Declaration k1 _) (Declaration k2 _) = k1 `compare` k2
+
+-- | Normalize a group of selectors by sorting its' constituent selectors.
+-- The order in which selectors appear in a comma separated group of selectors
+-- does not change the semantics of a selection.
+normalizeSelectorsGroup :: [Selector] -> [Selector]
+normalizeSelectorsGroup = fmap Selector . sort . fmap unSelector
 
 normalizeAtRule :: AtRule -> AtRule
 normalizeAtRule (Media rule) = Media (normalizeMediaRule rule)
