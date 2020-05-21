@@ -3,6 +3,7 @@
 import Data.CSS.Syntax.Tokens (Token, tokenize)
 import Data.Text (Text)
 import qualified Data.Text.IO as T
+import Normalize
 import Parse
 import Render
 import System.Environment (getArgs)
@@ -17,7 +18,7 @@ main = do
       tokens = fmap (fmap tokenize) source
   case tokens of
     Right ts ->
-      either putStrLn T.putStrLn . parseAndRender =<< ts
+      either putStrLn T.putStrLn . parseAndNormalizeAndRender =<< ts
     Left _ -> putStrLn "usage: app <filename>"
   where
     pElem :: Parser a -> [Token] -> Either String a
@@ -25,8 +26,8 @@ main = do
       Right element -> Right element
       Left parseErr -> Left (errorBundlePretty parseErr)
     tryParseElemToText r p = fmap r . pElem p
-    parseAndRender :: [Token] -> Either String Text
-    parseAndRender = tryParseElemToText (renderStylesheet 0) parseStylesheet
+    parseAndNormalizeAndRender :: [Token] -> Either String Text
+    parseAndNormalizeAndRender = tryParseElemToText (renderStylesheet 0) (normalizeStylesheet <$> parseStylesheet)
 
 safeHead :: [a] -> Either String a
 safeHead [] = Left "empty list"
