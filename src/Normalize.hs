@@ -1,4 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE PatternSynonyms #-}
+{-# LANGUAGE ViewPatterns #-}
 
 module Normalize where
 
@@ -6,7 +8,7 @@ import Balanced
 import Balanced.Internal
 import Data.CSS.Syntax.Tokens as CSS
 import Data.List
-import Data.Text
+import Data.Text as T
 import Types
 
 -- | Transform a stylesheet into another one in a canonical form.
@@ -43,20 +45,22 @@ mapNumericToken f (Dimension t nv u) = Dimension (f t) nv u
 mapNumericToken f (Percentage t nv) = Percentage (f t) nv
 mapNumericToken _ x = x
 
+pattern (:.) :: Char -> Text -> Text
+pattern x :. xs <- (T.uncons -> Just (x, xs))
+
+infixr 5 :.
+
 -- | Add leading zero to strings representing numeric literals with an ommited
 -- integer part i.e those starting with a decimal comma.
 --
 -- >>> addLeadingZero "-.5"
 -- "-0.5"
 addLeadingZero :: Text -> Text
-addLeadingZero text = case Data.Text.uncons text of
-  Just (x, xs)
-    | x == '.' -> "0" <> text
-    | x `elem` ['+', '-'] -> case Data.Text.uncons xs of
-      Just (x', _xs') -> if x' == '.' then singleton x <> "0" <> xs else text
-      Nothing -> text
-    | otherwise -> text
-  Nothing -> text
+addLeadingZero ts = case ts of
+  '.' :. _ts' -> "0" <> ts
+  s :. '.' :. ts'
+    | s `elem` ['+', '-'] -> singleton s <> "0." <> ts'
+  _ -> ts
 
 -- | Normalize a group of selectors by sorting its' constituent selectors.
 -- The order in which selectors appear in a comma separated group of selectors
