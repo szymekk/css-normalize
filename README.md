@@ -7,6 +7,13 @@ The aforementioned equivalence means that the output file might e.g. have a diff
 The output file is normalized or canonical in the sense that running the tool on an already normalized stylesheet should produce output identical to the input.
 In other words the process of normalization is idempotent.
 
+Transformations applied include:
+
+- sorting properties by key within a style rule,
+- sorting selectors in a group of comma separated selectors,
+- adding leading zeros to floating point numeric literals (e.g changing `.5` to `0.5`)
+- applying uniform formatting
+
 ## Building
 
 ```
