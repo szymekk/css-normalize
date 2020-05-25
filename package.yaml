@@ -12,6 +12,7 @@ dependencies:
 - megaparsec
 - text
 - containers
+- optparse-applicative
 
 library:
   source-dirs: src
