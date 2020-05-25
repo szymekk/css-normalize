@@ -14,13 +14,35 @@ import Types
 -- | Transform a stylesheet into another one in a canonical form.
 -- The returned stylesheet is semantically equivalent to the input.
 -- The transorm is canonical in the sense that normalization is idempotent.
+normalizeStylesheet' :: StylesheetOpts -> Stylesheet -> Stylesheet
+normalizeStylesheet' opts (Stylesheet elements) =
+  Stylesheet (fmap (normalizeStylesheetElement' opts) elements)
+
 normalizeStylesheet :: Stylesheet -> Stylesheet
 normalizeStylesheet (Stylesheet elements) =
   Stylesheet (fmap normalizeStylesheetElement elements)
 
+normalizeStylesheetElement' :: StylesheetOpts -> StylesheetElement -> StylesheetElement
+normalizeStylesheetElement' opts (StyleRule rule) = StyleRule (normalizeStyleRule' opts rule)
+normalizeStylesheetElement' opts (AtRule rule) = AtRule (normalizeAtRule' opts rule)
+
 normalizeStylesheetElement :: StylesheetElement -> StylesheetElement
 normalizeStylesheetElement (StyleRule rule) = StyleRule (normalizeStyleRule rule)
 normalizeStylesheetElement (AtRule rule) = AtRule (normalizeAtRule rule)
+
+normalizeStyleRule' :: StylesheetOpts -> QualifiedRule -> QualifiedRule
+normalizeStyleRule' opts (QualifiedRule prelude declarations) =
+  QualifiedRule prelude' declarations'
+  where
+    prelude' = if sortSelectors opts then normalizeSelectorsGroup prelude else prelude
+    declarations' = if sortProperties opts then sortBy compareKeys normalizedDeclarations else normalizedDeclarations
+    -- sortBy compareKeys (fmap normalizeOneDeclaration declarations)
+    normalizedDeclarations = fmap normalizeOneDeclaration' declarations
+    compareKeys (Declaration k1 _) (Declaration k2 _) = k1 `compare` k2
+    normalizeOneDeclaration' = if addLeadingZeros opts then normalizeOneDeclaration else id
+    normalizeOneDeclaration (Declaration key values) =
+      let values' = UnsafeBalanced $ fmap normalizeToken (unBalanced values)
+       in Declaration key values'
 
 -- | Normalize a style rule by sorting its' declarations by keys
 -- and sorting the selectors of it's prelude.
@@ -74,9 +96,17 @@ stripPlusSign ts = case ts of
 normalizeSelectorsGroup :: [Selector] -> [Selector]
 normalizeSelectorsGroup = fmap Selector . sort . fmap unSelector
 
+normalizeAtRule' :: StylesheetOpts -> AtRule -> AtRule
+normalizeAtRule' opts (Media rule) = Media (normalizeMediaRule' opts rule)
+normalizeAtRule' _opts other = other
+
 normalizeAtRule :: AtRule -> AtRule
 normalizeAtRule (Media rule) = Media (normalizeMediaRule rule)
 normalizeAtRule other = other
+
+normalizeMediaRule' :: StylesheetOpts -> MediaRule -> MediaRule
+normalizeMediaRule' opts (MediaRule prelude stylesheet) =
+  MediaRule prelude (normalizeStylesheet' opts stylesheet)
 
 -- | Normalize a @media rule by normalizing its' inner stylesheet.
 normalizeMediaRule :: MediaRule -> MediaRule

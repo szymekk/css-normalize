@@ -8,6 +8,8 @@ module Types
     AtRule (..),
     Block (..),
     Selector (..),
+    StylesheetOpts (..),
+    defaultOpts,
   )
 where
 
@@ -46,3 +48,18 @@ data AtRule
 
 data MediaRule = MediaRule [CSS.Token] Stylesheet
   deriving (Eq, Show)
+
+data StylesheetOpts
+  = Opts
+      { sortSelectors :: Bool,
+        sortProperties :: Bool,
+        addLeadingZeros :: Bool
+      }
+
+defaultOpts :: StylesheetOpts
+defaultOpts =
+  Opts
+    { sortSelectors = True,
+      sortProperties = True,
+      addLeadingZeros = True
+    }
