@@ -29,6 +29,7 @@ pSortSelectors :: A.Parser Bool
 pSortSelectors =
   switch
     ( long "sort-selectors"
+        <> short 's'
         <> help "Sort selectors in a selector group"
     )
 
@@ -36,6 +37,7 @@ pSortProperties :: A.Parser Bool
 pSortProperties =
   switch
     ( long "sort-props"
+        <> short 'p'
         <> help "Sort properties"
     )
 
@@ -43,6 +45,7 @@ pAddZeros :: A.Parser Bool
 pAddZeros =
   switch
     ( long "add-zeros"
+        <> short 'z'
         <> help "Add leading zeros"
     )
 
