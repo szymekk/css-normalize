@@ -9,6 +9,7 @@ module Types
     Block (..),
     Selector (..),
     StylesheetOpts (..),
+    LeadingZerosHandling (..),
     defaultOpts,
   )
 where
@@ -49,11 +50,13 @@ data AtRule
 data MediaRule = MediaRule [CSS.Token] Stylesheet
   deriving (Eq, Show)
 
+data LeadingZerosHandling = AddZeros | StripZeros | NoEdit
+
 data StylesheetOpts
   = Opts
       { sortSelectors :: Bool,
         sortProperties :: Bool,
-        addLeadingZeros :: Bool
+        leadingZerosHandling :: LeadingZerosHandling
       }
 
 defaultOpts :: StylesheetOpts
@@ -61,5 +64,5 @@ defaultOpts =
   Opts
     { sortSelectors = True,
       sortProperties = True,
-      addLeadingZeros = True
+      leadingZerosHandling = AddZeros
     }

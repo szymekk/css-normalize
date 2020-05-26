@@ -39,9 +39,12 @@ normalizeStyleRule' opts (QualifiedRule prelude declarations) =
     -- sortBy compareKeys (fmap normalizeOneDeclaration declarations)
     normalizedDeclarations = fmap normalizeOneDeclaration' declarations
     compareKeys (Declaration k1 _) (Declaration k2 _) = k1 `compare` k2
-    normalizeOneDeclaration' = if addLeadingZeros opts then normalizeOneDeclaration else id
-    normalizeOneDeclaration (Declaration key values) =
-      let values' = UnsafeBalanced $ fmap normalizeToken (unBalanced values)
+    normalizeOneDeclaration' = case leadingZerosHandling opts of
+      AddZeros -> normalizeOneDeclaration addZeros
+      StripZeros -> normalizeOneDeclaration stripZeros
+      NoEdit -> id
+    normalizeOneDeclaration normalizeTokenFun (Declaration key values) =
+      let values' = UnsafeBalanced $ fmap normalizeTokenFun (unBalanced values)
        in Declaration key values'
 
 -- | Normalize a style rule by sorting its' declarations by keys
@@ -67,6 +70,18 @@ mapNumericToken f (Dimension t nv u) = Dimension (f t) nv u
 mapNumericToken f (Percentage t nv) = Percentage (f t) nv
 mapNumericToken _ x = x
 
+addZeros :: CSS.Token -> CSS.Token
+addZeros (Number t v) = Number (addZerosNumeric t) v
+addZeros (Dimension t nv u) = Dimension (addZerosNumeric t) nv u
+addZeros (Percentage t nv) = Percentage (addZerosNumeric t) nv
+addZeros x = x
+
+stripZeros :: CSS.Token -> CSS.Token
+stripZeros (Number t v) = Number (stripZerosNumeric t) v
+stripZeros (Dimension t nv u) = Dimension (stripZerosNumeric t) nv u
+stripZeros (Percentage t nv) = Percentage (stripZerosNumeric t) nv
+stripZeros x = x
+
 pattern (:.) :: Char -> Text -> Text
 pattern x :. xs <- (T.uncons -> Just (x, xs))
 
@@ -88,6 +103,20 @@ addLeadingZero ts = case ts of
 stripPlusSign :: Text -> Text
 stripPlusSign ts = case ts of
   '+' :. ts' -> ts'
+  _ -> ts
+
+addZerosNumeric :: Text -> Text
+addZerosNumeric ts = case ts of
+  '.' :. ts' -> "0." <> ts'
+  '+' :. '.' :. ts' -> "0." <> ts'
+  '-' :. '.' :. ts' -> "-0." <> ts'
+  _ -> ts
+
+stripZerosNumeric :: Text -> Text
+stripZerosNumeric ts = case ts of
+  '0' :. '.' :. ts' -> "." <> ts'
+  '+' :. '0' :. '.' :. ts' -> "." <> ts'
+  '-' :. '0' :. '.' :. ts' -> "-." <> ts'
   _ -> ts
 
 -- | Normalize a group of selectors by sorting its' constituent selectors.

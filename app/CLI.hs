@@ -53,7 +53,11 @@ pInput :: A.Parser Input
 pInput = pFileInput <|> pStdInput
 
 pOptions :: A.Parser StylesheetOpts
-pOptions = Opts <$> pSortSelectors <*> pSortProperties <*> pAddZeros
--- defaultOpts = Opts {sortSelectors = True,
--- sortProperties = True,
--- addLeadingZeros = True}
+pOptions = Opts <$> pSortSelectors <*> pSortProperties <*> pLeadingZerosHandling
+
+pLeadingZerosHandling :: Parser LeadingZerosHandling
+pLeadingZerosHandling =
+  flag' AddZeros (long "add-zeros")
+    <|> flag' StripZeros (long "strip-zeros")
+    <|> flag' NoEdit (long "leave-zeros")
+    <|> pure AddZeros
