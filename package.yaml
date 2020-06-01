@@ -27,7 +27,7 @@ ghc-options:
     - -fno-warn-orphans
 
 executables:
-  css-normalize-exe:
+  cssn:
     main:                Main.hs
     source-dirs:         app
     ghc-options:
