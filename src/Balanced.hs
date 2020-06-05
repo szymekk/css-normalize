@@ -54,9 +54,21 @@ someBalanced =
           <|> parseEnclosed
       )
 
+-- | @manyBalancedTill end@ repeatedly parses /zero/ or more balanced atoms
+-- until parser @end@ succeeds.
+-- A balanced atom is either:
+--
+-- - a non-bracket token
+-- - or an opening token (e.g. 'LeftCurlyBracket'), followed by a sequence
+-- of tokens comprising /zero/ or more balanced atoms, followed by a matching
+-- closing token (e.g. 'RightCurlyBracket').
+--
+-- Returns a nonempty list of balanced tokens.
 manyBalancedTill :: Parser end -> Parser Balanced
 manyBalancedTill end = (mempty <$ end) <|> someBalancedTill end
 
+-- | @someBalancedTill end@ works similarly to @manyBalancedTill end@ but
+-- at least one balanced atom should be parsed before @end@ succeeds.
 someBalancedTill :: Parser end -> Parser Balanced
 someBalancedTill end =
   mconcat
@@ -75,18 +87,24 @@ someNonBracket = UnsafeBalanced <$> some nonBracket
 
 -- | Parse a matching pair of bracket-like tokens
 -- enclosing a nonempty sequence of balanced tokens.
+-- Returns all consumed tokens including the surrounding bracket-like tokens.
 parseEnclosed :: Parser Balanced
 parseEnclosed = do
   (bracketType, ts) <- parseEnclosedWithBracketType
   let (opening, closing) = getBracketPair bracketType
   return $ UnsafeBalanced $ opening : unBalanced ts ++ [closing]
 
+-- | Get a matching pair of an opening and closing tokens corresponding
+-- to the specified type of bracket-like tokens.
 getBracketPair :: BracketType -> (CSS.Token, CSS.Token)
 getBracketPair (FunctionToken name) = (Function name, RightParen)
 getBracketPair Round = (LeftParen, RightParen)
 getBracketPair Curly = (LeftCurlyBracket, RightCurlyBracket)
 getBracketPair Square = (LeftSquareBracket, RightSquareBracket)
 
+-- | Parse a matching pair of bracket-like tokens
+-- enclosing a nonempty sequence of balanced tokens.
+-- Returns the type of surrounding bracket-like tokens and the enclosed tokens.
 parseEnclosedWithBracketType :: Parser (BracketType, Balanced)
 parseEnclosedWithBracketType = do
   bracketType <- parseBracketOpen
@@ -95,6 +113,7 @@ parseEnclosedWithBracketType = do
   void $ single closingBracket
   return (bracketType, innerTokens)
 
+-- | Parse a non-bracket-like token.
 nonBracket :: Parser CSS.Token
 nonBracket = token test Set.empty <?> "non-bracket"
   where
@@ -107,6 +126,7 @@ nonBracket = token test Set.empty <?> "non-bracket"
     test (Function _) = Nothing
     test t = Just t
 
+-- | Parse an opening bracket-like token.
 parseBracketOpen :: Parser BracketType
 parseBracketOpen = token test Set.empty <?> "bracket opener"
   where

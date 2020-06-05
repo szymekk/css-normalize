@@ -10,9 +10,12 @@ import Data.CSS.Syntax.Tokens as CSS
 import Data.Text as T
 import Types
 
+-- | Basic unit of indentation.
 indentText :: Text
 indentText = "    "
 
+-- | Generate leading indentation that should be prepended at the specified
+-- level of indentation.
 indent :: Int -> Text
 indent n = T.replicate n indentText
 
@@ -48,6 +51,7 @@ renderAtRule n atRule = case atRule of
         <> indent m
         <> "}"
 
+-- | Render a stylesheet at a specified indentation level.
 renderStylesheet :: Int -> Stylesheet -> Text
 renderStylesheet n (Stylesheet elements) =
   intercalate "\n" (fmap (renderStylesheetElement n) elements)

@@ -39,6 +39,8 @@ normalizeStyleRule (QualifiedRule prelude declarations) =
 normalizeToken :: CSS.Token -> CSS.Token
 normalizeToken = mapNumericToken (addLeadingZero . stripPlusSign)
 
+-- | Map a function over the strings from which the numeric tokens were
+-- initially parsed.
 mapNumericToken :: (Text -> Text) -> CSS.Token -> CSS.Token
 mapNumericToken f (Number t v) = Number (f t) v
 mapNumericToken f (Dimension t nv u) = Dimension (f t) nv u
@@ -62,7 +64,7 @@ addLeadingZero ts = case ts of
     | s `elem` ['+', '-'] -> singleton s <> "0." <> ts'
   _ -> ts
 
--- | Strip leading plus sign from numeric literals
+-- | Strip leading plus sign from numeric literals.
 stripPlusSign :: Text -> Text
 stripPlusSign ts = case ts of
   '+' :. ts' -> ts'

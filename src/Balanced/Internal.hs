@@ -17,5 +17,6 @@ import Data.CSS.Syntax.Tokens as CSS
 newtype Balanced = UnsafeBalanced [CSS.Token]
   deriving (Eq, Show)
 
+-- | Extract the list of tokens from 'Balanced'.
 unBalanced :: Balanced -> [CSS.Token]
 unBalanced (UnsafeBalanced ts) = ts
