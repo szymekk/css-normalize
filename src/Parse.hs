@@ -6,6 +6,7 @@ module Parse
     parseBlockCurly,
     parseOneDeclaration,
     parseQualifiedRule,
+    parseStylesheetEof,
     parseStylesheet,
     parseUnknownAtRule,
     parseMediaRule,
@@ -112,20 +113,21 @@ parseStylesheetElement =
   AtRule <$> parseAtRule
     <|> StyleRule <$> parseQualifiedRule
 
-parseStylesheetEnd :: Parser a -> Parser Stylesheet
-parseStylesheetEnd pEnd = do
+-- | Parse a CSS stylesheet.
+parseStylesheet :: Parser Stylesheet
+parseStylesheet = do
   skipWs
   stylesheetElements <- sepEndBy (try parseStylesheetElement) skipWs
-  void pEnd
   return (Stylesheet stylesheetElements)
 
-parseStylesheet :: Parser Stylesheet
-parseStylesheet = parseStylesheetEnd eof
+-- | Parse a CSS stylesheet followed by end of input.
+parseStylesheetEof :: Parser Stylesheet
+parseStylesheetEof = parseStylesheet <* eof
 
 parseMediaRule :: Parser MediaRule
 parseMediaRule = do
   void $ try pAtMedia
   skipWs
   prelude <- manyTill anySingle $ try (skipWs *> single LeftCurlyBracket)
-  stylesheet <- parseStylesheetEnd (single RightCurlyBracket)
+  stylesheet <- parseStylesheet <* single RightCurlyBracket
   return $ MediaRule prelude stylesheet

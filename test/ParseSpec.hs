@@ -176,25 +176,25 @@ spec =
       parse' parseUnknownAtRule (t "@name a b ;") `shouldParse` SemicolonAtRule "name" [ws, a, ws, b, ws]
     describe "stylesheets" $ do
       it "parses empty stylesheets" $ do
-        parse' parseStylesheet (t "") `shouldParse` Stylesheet []
-        parse' parseStylesheet (t " ") `shouldParse` Stylesheet []
+        parse' parseStylesheetEof (t "") `shouldParse` Stylesheet []
+        parse' parseStylesheetEof (t " ") `shouldParse` Stylesheet []
       it "parses valid stylesheets" $ do
-        parse' parseStylesheet `shouldSucceedOn` t "body{k:v} @rule a b{ss}"
-        parse' parseStylesheet `shouldSucceedOn` t "@rule a b{ss!;x} body{k:v}"
-        parse' parseStylesheet `shouldSucceedOn` t "body{k:v} @rule a b{ss'xyz'}"
-        parse' parseStylesheet `shouldSucceedOn` t "@rule a b{ss!;''} body{k:v a}"
-        parse' parseStylesheet `shouldSucceedOn` t " body x {k1:v1;k2:v2} @rule{...} "
-        parse' parseStylesheet `shouldSucceedOn` t " body x {k1:v1;k2:v2} @media{} "
-        parse' parseStylesheet `shouldSucceedOn` t " body x {k1:v1;k2:v2} @media{ } "
+        parse' parseStylesheetEof `shouldSucceedOn` t "body{k:v} @rule a b{ss}"
+        parse' parseStylesheetEof `shouldSucceedOn` t "@rule a b{ss!;x} body{k:v}"
+        parse' parseStylesheetEof `shouldSucceedOn` t "body{k:v} @rule a b{ss'xyz'}"
+        parse' parseStylesheetEof `shouldSucceedOn` t "@rule a b{ss!;''} body{k:v a}"
+        parse' parseStylesheetEof `shouldSucceedOn` t " body x {k1:v1;k2:v2} @rule{...} "
+        parse' parseStylesheetEof `shouldSucceedOn` t " body x {k1:v1;k2:v2} @media{} "
+        parse' parseStylesheetEof `shouldSucceedOn` t " body x {k1:v1;k2:v2} @media{ } "
       it "parses stylesheets containing function tokens" $ do
-        parse' parseStylesheet `shouldSucceedOn` t "body {k:func(a,b,c)}"
-        parse' parseStylesheet `shouldSucceedOn` t "@media{ body{ key: func() } } "
+        parse' parseStylesheetEof `shouldSucceedOn` t "body {k:func(a,b,c)}"
+        parse' parseStylesheetEof `shouldSucceedOn` t "@media{ body{ key: func() } } "
       it "fails on unbalanced brackets" $
-        parse' parseStylesheet `shouldFailOn` t "body {k:v)}"
+        parse' parseStylesheetEof `shouldFailOn` t "body {k:v)}"
       it "fails on stylesheet with invalid media rule" $
-        parse' parseStylesheet `shouldFailOn` t " body x {k1:v1;k2:v2} @media{...} "
+        parse' parseStylesheetEof `shouldFailOn` t " body x {k1:v1;k2:v2} @media{...} "
       it "parses stylesheet" $
-        parse' parseStylesheet (t "@media{}") `shouldParse` Stylesheet [AtRule $ Media $ MediaRule [] (Stylesheet [])]
+        parse' parseStylesheetEof (t "@media{}") `shouldParse` Stylesheet [AtRule $ Media $ MediaRule [] (Stylesheet [])]
     it "parses media rule" $ do
       parse' parseMediaRule `shouldSucceedOn` t "@media a b { body x {k1:v1;k2:v2} @rule{...} } "
       parse' parseMediaRule (t "@media a b { body x {k1:v1;k2:v2} @rule{...} } ")

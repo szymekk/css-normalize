@@ -47,7 +47,7 @@ processInput StdInput = do
 
 transformStylesheet :: FilePath -> Text -> Text
 transformStylesheet inputName inputText =
-  let parsedStylesheet = parseFromText parseStylesheet inputName inputText
+  let parsedStylesheet = parseFromText parseStylesheetEof inputName inputText
       normalized = fmap normalizeStylesheet parsedStylesheet
    in either renderParseError renderStylesheet' normalized
   where
