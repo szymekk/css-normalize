@@ -2,6 +2,7 @@
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE ViewPatterns #-}
 
+-- | Normalization of stylesheets and other CSS entities.
 module Normalize where
 
 import Balanced

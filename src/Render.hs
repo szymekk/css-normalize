@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- | Rendering stylesheets and CSS entities as text.
 module Render
   ( renderStylesheet,
   )
@@ -52,7 +53,12 @@ renderAtRule n atRule = case atRule of
         <> "}"
 
 -- | Render a stylesheet at a specified indentation level.
-renderStylesheet :: Int -> Stylesheet -> Text
+renderStylesheet ::
+  -- | indentation level
+  Int ->
+  -- | stylesheet to render
+  Stylesheet ->
+  Text
 renderStylesheet n (Stylesheet elements) =
   intercalate "\n" (fmap (renderStylesheetElement n) elements)
 

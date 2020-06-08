@@ -1,3 +1,8 @@
+-- | Internal module for encapsulating token sequences with balanced occurences
+-- of bracket-like tokens.
+--
+-- This module is not intended for direct usage.
+-- Its' public parts are re-exported by "Balanced".
 module Balanced.Internal
   ( unBalanced,
     Balanced (UnsafeBalanced),

@@ -1,5 +1,6 @@
 {-# LANGUAGE InstanceSigs #-}
 
+-- | Parsing sequences of tokens with balanced brackets.
 module Balanced
   ( unBalanced,
     Balanced,

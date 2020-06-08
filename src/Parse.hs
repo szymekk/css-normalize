@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- | Parsing CSS files.
 module Parse
   ( parseDeclarationValues,
     parseBlockCurly,
@@ -24,6 +25,7 @@ import Parser
 import Text.Megaparsec
 import Types
 
+-- | Skip and discard zero or more whitespace tokens.
 skipWs :: Parser ()
 skipWs = skipMany (single Whitespace)
 
