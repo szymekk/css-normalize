@@ -30,6 +30,7 @@ import Types
 skipWs :: Parser ()
 skipWs = skipMany (single Whitespace)
 
+-- | Parse the value of a CSS declaration (i.e. the part after the colon).
 parseDeclarationValues :: Parser Balanced
 parseDeclarationValues =
   manyBalancedTill (lookAhead parseEnding)
@@ -45,6 +46,7 @@ pIdent = token test Set.empty <?> "ident"
     test (Ident str) = Just str
     test _ = Nothing
 
+-- | Parse a single CSS declaration.
 parseOneDeclaration :: Parser Declaration
 parseOneDeclaration = do
   propertyName <- Key <$> pIdent
@@ -53,6 +55,7 @@ parseOneDeclaration = do
   skipWs
   Declaration propertyName <$> parseDeclarationValues
 
+-- | Parse a qualified rule.
 parseQualifiedRule :: Parser QualifiedRule
 parseQualifiedRule = do
   selectors <- parseSelectorsGroup
@@ -60,11 +63,11 @@ parseQualifiedRule = do
   skipWs
   QualifiedRule selectors <$> parseDeclarationList
 
+-- | Parse a selector group i.e. a comma separated sequence of selectors.
 parseSelectorsGroup :: Parser [Selector]
 parseSelectorsGroup = parseSelector `sepBy1` single Comma
 
--- | Parse a selector, i.e. a list of tokens. Any leading and trailing
--- whitespace tokens are dropped.
+-- | Parse a selector. Any leading and trailing whitespace tokens are dropped.
 parseSelector :: Parser Selector
 parseSelector = fmap Selector $ skipWs *> someTill pSelectorToken (try pEnd)
   where
@@ -98,6 +101,7 @@ pAtMedia = token test Set.empty <?> "@media"
     test (AtKeyword "media") = Just ()
     test _ = Nothing
 
+-- | Parse an at-rule, according to a generic grammar.
 parseUnknownAtRule :: Parser AtRule
 parseUnknownAtRule = do
   ruleName <- pAtKeyword
@@ -105,6 +109,7 @@ parseUnknownAtRule = do
   BlockAtRule ruleName prelude . unBlock <$> parseBlockCurly
     <|> single Semicolon $> SemicolonAtRule ruleName prelude
 
+-- | Parse an at-rule. Use specialized grammars for known at-rules.
 parseAtRule :: Parser AtRule
 parseAtRule = (Media <$> parseMediaRule) <|> parseUnknownAtRule
 
@@ -124,6 +129,7 @@ parseStylesheet = do
 parseStylesheetEof :: Parser Stylesheet
 parseStylesheetEof = parseStylesheet <* eof
 
+-- | Parse a \'@media\' rule.
 parseMediaRule :: Parser MediaRule
 parseMediaRule = do
   void $ try pAtMedia
