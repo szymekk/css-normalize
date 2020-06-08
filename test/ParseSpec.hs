@@ -167,9 +167,13 @@ spec =
         parse' parseBlockCurly `shouldSucceedOn` t "{}({}[])"
         parse' parseBlockCurly `shouldSucceedOn` t "{}(func({})[])"
     it "parses unknown at-rules" $ do
-      parse' (parseUnknownAtRule "name") `shouldSucceedOn` t " a b{k:v}"
-      parse' (parseUnknownAtRule "name") `shouldSucceedOn` t " {}"
-      parse' (parseUnknownAtRule "name") (t " a b{k:v}") `shouldParse` BlockAtRule "name" [ws, a, ws, b] [Ident "k", Colon, Ident "v"]
+      parse' parseUnknownAtRule `shouldSucceedOn` t "@name a b{k:v}"
+      parse' parseUnknownAtRule `shouldSucceedOn` t "@name {}"
+      parse' parseUnknownAtRule (t "@name a b{k:v}") `shouldParse` BlockAtRule "name" [ws, a, ws, b] [Ident "k", Colon, Ident "v"]
+      parse' parseUnknownAtRule `shouldSucceedOn` t "@name a;"
+      parse' parseUnknownAtRule `shouldSucceedOn` t "@name a b ;"
+      parse' parseUnknownAtRule (t "@name a;") `shouldParse` SemicolonAtRule "name" [ws, a]
+      parse' parseUnknownAtRule (t "@name a b ;") `shouldParse` SemicolonAtRule "name" [ws, a, ws, b, ws]
     describe "stylesheets" $ do
       it "parses empty stylesheets" $ do
         parse' parseStylesheet (t "") `shouldParse` Stylesheet []
@@ -192,8 +196,8 @@ spec =
       it "parses stylesheet" $
         parse' parseStylesheet (t "@media{}") `shouldParse` Stylesheet [AtRule $ Media $ MediaRule [] (Stylesheet [])]
     it "parses media rule" $ do
-      parse' parseMediaRulePreludeBody `shouldSucceedOn` t "a b { body x {k1:v1;k2:v2} @rule{...} } "
-      parse' parseMediaRulePreludeBody (t "a b { body x {k1:v1;k2:v2} @rule{...} } ")
+      parse' parseMediaRule `shouldSucceedOn` t "@media a b { body x {k1:v1;k2:v2} @rule{...} } "
+      parse' parseMediaRule (t "@media a b { body x {k1:v1;k2:v2} @rule{...} } ")
         `shouldParse` MediaRule
           [a, ws, b]
           ( Stylesheet
@@ -204,8 +208,8 @@ spec =
                 AtRule $ BlockAtRule "rule" [] [dot, dot, dot]
               ]
           )
-      parse' parseMediaRulePreludeBody `shouldFailOn` t "a b { body x {k1:v1;k2:v2} @media{...} }"
-      parse' parseMediaRulePreludeBody (t "a b { body x {k1:v1;k2:v2} @rule {...} @media { } }")
+      parse' parseMediaRule `shouldFailOn` t "@media a b { body x {k1:v1;k2:v2} @media{...} }"
+      parse' parseMediaRule (t "@media a b { body x {k1:v1;k2:v2} @rule {...} @media { } }")
         `shouldParse` MediaRule
           [a, ws, b]
           ( Stylesheet

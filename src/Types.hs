@@ -27,7 +27,7 @@ newtype Key = Key Text
 data Declaration = Declaration Key Balanced
   deriving (Eq, Show)
 
-newtype Block = Block [CSS.Token]
+newtype Block = Block {unBlock :: [CSS.Token]}
   deriving (Eq, Show)
 
 data StylesheetElement

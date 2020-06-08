@@ -9,7 +9,6 @@ module Parse
     parseStylesheet,
     parseUnknownAtRule,
     parseMediaRule,
-    parseMediaRulePreludeBody,
     parseSelector,
     parseSelectorsGroup,
     Parser,
@@ -19,6 +18,7 @@ where
 import Balanced
 import Control.Monad
 import Data.CSS.Syntax.Tokens as CSS
+import Data.Functor
 import Data.Set as Set hiding (foldr, null)
 import Data.Text hiding (concat)
 import Parser
@@ -86,38 +86,30 @@ parseBlockCurly =
     betweenCurly = between (single LeftCurlyBracket) (single RightCurlyBracket)
 
 pAtKeyword :: Parser Text
-pAtKeyword = token test Set.empty <?> "AtKeyword"
+pAtKeyword = token test Set.empty <?> "at-keyword"
   where
     test (AtKeyword str) = Just str
     test _ = Nothing
 
-parseUnknownAtRule :: Text -> Parser AtRule
-parseUnknownAtRule name = do
-  prelude <- manyTill anySingle $ try (lookAhead parsePreludeEnd)
-  terminator <- lookAhead parsePreludeEnd
-  case terminator of
-    Left _ -> do
-      -- LeftCurlyBracket
-      (Block blockTokens) <- parseBlockCurly
-      return $ BlockAtRule name prelude blockTokens
-    Right _ -> do
-      -- Semicolon
-      void (single Semicolon)
-      return $ SemicolonAtRule name prelude
+pAtMedia :: Parser ()
+pAtMedia = token test Set.empty <?> "@media"
   where
-    parsePreludeEnd = void <$> eitherP (single LeftCurlyBracket) (single Semicolon)
+    test (AtKeyword "media") = Just ()
+    test _ = Nothing
 
-parseAtRule :: Parser StylesheetElement
-parseAtRule = do
+parseUnknownAtRule :: Parser AtRule
+parseUnknownAtRule = do
   ruleName <- pAtKeyword
-  let result = case ruleName of
-        "media" -> Media <$> parseMediaRulePreludeBody
-        _ -> parseUnknownAtRule ruleName
-  AtRule <$> result
+  prelude <- many (noneOf [LeftCurlyBracket, Semicolon])
+  BlockAtRule ruleName prelude . unBlock <$> parseBlockCurly
+    <|> single Semicolon $> SemicolonAtRule ruleName prelude
+
+parseAtRule :: Parser AtRule
+parseAtRule = (Media <$> parseMediaRule) <|> parseUnknownAtRule
 
 parseStylesheetElement :: Parser StylesheetElement
 parseStylesheetElement =
-  (try (lookAhead pAtKeyword) >> parseAtRule)
+  AtRule <$> parseAtRule
     <|> StyleRule <$> parseQualifiedRule
 
 parseStylesheetEnd :: Parser a -> Parser Stylesheet
@@ -132,13 +124,7 @@ parseStylesheet = parseStylesheetEnd eof
 
 parseMediaRule :: Parser MediaRule
 parseMediaRule = do
-  name <- pAtKeyword
-  case name of
-    "media" -> parseMediaRulePreludeBody
-    _ -> fail ""
-
-parseMediaRulePreludeBody :: Parser MediaRule
-parseMediaRulePreludeBody = do
+  void $ try pAtMedia
   skipWs
   prelude <- manyTill anySingle $ try (skipWs *> single LeftCurlyBracket)
   stylesheet <- parseStylesheetEnd (single RightCurlyBracket)
