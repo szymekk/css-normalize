@@ -24,17 +24,17 @@ import Parser
 import Text.Megaparsec
 import Types
 
-manyWs :: Parser [CSS.Token]
-manyWs = many (single Whitespace)
+skipWs :: Parser ()
+skipWs = skipMany (single Whitespace)
 
 parseDeclarationValues :: Parser Balanced
 parseDeclarationValues =
   manyBalancedTill (lookAhead parseEnding)
   where
-    parseEnding = try pDeclarationSeparator <|> void (try (manyWs *> single RightCurlyBracket))
+    parseEnding = try pDeclarationSeparator <|> void (try (skipWs *> single RightCurlyBracket))
 
 pDeclarationSeparator :: Parser ()
-pDeclarationSeparator = void $ manyWs *> single Semicolon <* manyWs
+pDeclarationSeparator = void $ skipWs *> single Semicolon <* skipWs
 
 pIdent :: Parser Text
 pIdent = token test Set.empty <?> "ident"
@@ -45,16 +45,16 @@ pIdent = token test Set.empty <?> "ident"
 parseOneDeclaration :: Parser Declaration
 parseOneDeclaration = do
   propertyName <- Key <$> pIdent
-  void manyWs
+  skipWs
   void $ single Colon
-  void manyWs
+  skipWs
   Declaration propertyName <$> parseDeclarationValues
 
 parseQualifiedRule :: Parser QualifiedRule
 parseQualifiedRule = do
   selectors <- parseSelectorsGroup
   void (single LeftCurlyBracket)
-  void manyWs
+  skipWs
   QualifiedRule selectors <$> parseDeclarationList
 
 parseSelectorsGroup :: Parser [Selector]
@@ -63,15 +63,15 @@ parseSelectorsGroup = parseSelector `sepBy1` single Comma
 -- | Parse a selector, i.e. a list of tokens. Any leading and trailing
 -- whitespace tokens are dropped.
 parseSelector :: Parser Selector
-parseSelector = fmap Selector $ manyWs *> someTill pSelectorToken (try pEnd)
+parseSelector = fmap Selector $ skipWs *> someTill pSelectorToken (try pEnd)
   where
     pSelectorToken = noneOf [LeftCurlyBracket, RightCurlyBracket, Comma]
-    pEnd = manyWs <* notFollowedBy pSelectorToken
+    pEnd = skipWs <* notFollowedBy pSelectorToken
 
 parseDeclarationList :: Parser [Declaration]
 parseDeclarationList = do
   declarations <- sepEndBy parseOneDeclaration (try pDeclarationSeparator)
-  void $ manyWs *> single RightCurlyBracket
+  void $ skipWs *> single RightCurlyBracket
   return declarations
 
 -- | Parse a list of tokens enclosed by a pair of curly brackets.
@@ -120,8 +120,8 @@ parseStylesheetElement =
 
 parseStylesheetEnd :: Parser a -> Parser Stylesheet
 parseStylesheetEnd pEnd = do
-  void manyWs
-  stylesheetElements <- sepEndBy (try parseStylesheetElement) manyWs
+  skipWs
+  stylesheetElements <- sepEndBy (try parseStylesheetElement) skipWs
   void pEnd
   return (Stylesheet stylesheetElements)
 
@@ -137,7 +137,7 @@ parseMediaRule = do
 
 parseMediaRulePreludeBody :: Parser MediaRule
 parseMediaRulePreludeBody = do
-  void manyWs
-  prelude <- manyTill anySingle $ try (manyWs *> single LeftCurlyBracket)
+  skipWs
+  prelude <- manyTill anySingle $ try (skipWs *> single LeftCurlyBracket)
   stylesheet <- parseStylesheetEnd (single RightCurlyBracket)
   return $ MediaRule prelude stylesheet
