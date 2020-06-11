@@ -19,6 +19,7 @@ normalizeStylesheet :: Stylesheet -> Stylesheet
 normalizeStylesheet (Stylesheet elements) =
   Stylesheet (fmap normalizeStylesheetElement elements)
 
+-- | Normalize stylesheet component (an at-rule or a style rule).
 normalizeStylesheetElement :: StylesheetElement -> StylesheetElement
 normalizeStylesheetElement (StyleRule rule) = StyleRule (normalizeStyleRule rule)
 normalizeStylesheetElement (AtRule rule) = AtRule (normalizeAtRule rule)
@@ -37,6 +38,7 @@ normalizeStyleRule (QualifiedRule prelude declarations) =
       let values' = UnsafeBalanced $ fmap normalizeToken (unBalanced values)
        in Declaration key values'
 
+-- | Normalize a single 'Token'.
 normalizeToken :: CSS.Token -> CSS.Token
 normalizeToken = mapNumericToken (addLeadingZero . stripPlusSign)
 
@@ -48,6 +50,7 @@ mapNumericToken f (Dimension t nv u) = Dimension (f t) nv u
 mapNumericToken f (Percentage t nv) = Percentage (f t) nv
 mapNumericToken _ x = x
 
+-- | Pattern for simplifying operations on 'Text'.
 pattern (:.) :: Char -> Text -> Text
 pattern x :. xs <- (T.uncons -> Just (x, xs))
 
@@ -77,11 +80,12 @@ stripPlusSign ts = case ts of
 normalizeSelectorsGroup :: [Selector] -> [Selector]
 normalizeSelectorsGroup = fmap Selector . sort . fmap unSelector
 
+-- | Normalize an at-rule.
 normalizeAtRule :: AtRule -> AtRule
 normalizeAtRule (Media rule) = Media (normalizeMediaRule rule)
 normalizeAtRule other = other
 
--- | Normalize a @media rule by normalizing its' inner stylesheet.
+-- | Normalize a \'@media\' rule by normalizing its' inner stylesheet.
 normalizeMediaRule :: MediaRule -> MediaRule
 normalizeMediaRule (MediaRule prelude stylesheet) =
   MediaRule prelude (normalizeStylesheet stylesheet)

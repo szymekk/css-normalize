@@ -4,6 +4,8 @@
 {-# LANGUAGE StandaloneDeriving #-}
 {-# LANGUAGE TypeFamilies #-}
 
+-- | Internal module exporting 'Stream' instance for the
+-- 'Data.CSS.Syntax.Tokens.Token' type.
 module TokenStream
   (
   )

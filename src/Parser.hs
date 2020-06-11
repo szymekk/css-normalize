@@ -1,3 +1,4 @@
+-- | Internal module created to avoid circular dependencies.
 module Parser
   ( Parser,
   )
@@ -7,4 +8,5 @@ import Data.CSS.Syntax.Tokens as CSS
 import Data.Void
 import Text.Megaparsec
 
+-- | Parser type for lists of CSS token.
 type Parser = Parsec Void [CSS.Token]
