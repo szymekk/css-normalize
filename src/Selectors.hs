@@ -24,7 +24,7 @@ newtype SelectorsGroup = SelectorsGroup {unSelectorsGroup :: NonEmpty Selector}
 data Combinator = Plus | Greater | Tilde | Space
   deriving (Eq, Show)
 
-data Selector = Selector (SimpleSelectorSeq, [(Combinator, SimpleSelectorSeq)])
+newtype Selector = Selector (SimpleSelectorSeq, [(Combinator, SimpleSelectorSeq)])
   deriving (Eq, Show)
 
 data SimpleSelectorSeq = WithTypeSelector (TypeSelector, [HCAPN]) | OnlyHCAPN (NonEmpty HCAPN)
@@ -75,7 +75,7 @@ parseCombinator =
 
 parseSimpleSelectorSeq :: Parser SimpleSelectorSeq
 parseSimpleSelectorSeq =
-  (fmap WithTypeSelector $ (,) <$> pTypeSelector <*> many parseHCAPN)
+  fmap WithTypeSelector ((,) <$> pTypeSelector <*> many parseHCAPN)
     <|> OnlyHCAPN <$> NE.some parseHCAPN
 
 parseHCAPN :: Parser HCAPN
@@ -131,9 +131,9 @@ data Pseudo = PElement PseudoElement | PClass PseudoClass
 data PseudoBody = IdentPseudo Text | FunctionalPseudo Text [CSS.Token]
   deriving (Eq, Show)
 
-data PseudoElement = PseudoElement PseudoBody deriving (Eq, Show)
+newtype PseudoElement = PseudoElement PseudoBody deriving (Eq, Show)
 
-data PseudoClass = PseudoClass PseudoBody deriving (Eq, Show)
+newtype PseudoClass = PseudoClass PseudoBody deriving (Eq, Show)
 
 pPseudoBody :: Parser PseudoBody
 pPseudoBody =
@@ -149,11 +149,11 @@ negation_arg
 data NegationArg = TS TypeSelector | IS IdSelector | CS Class | AS Attrib | PS Pseudo
   deriving (Eq, Show)
 
-data IdSelector = IdSelector Text deriving (Eq, Show)
+newtype IdSelector = IdSelector Text deriving (Eq, Show)
 
-data Class = Class Text deriving (Eq, Show)
+newtype Class = Class Text deriving (Eq, Show)
 
-data Negation = Negation NegationArg deriving (Eq, Show)
+newtype Negation = Negation NegationArg deriving (Eq, Show)
 
 ---
 -- parseSelector :: Parser Selector
@@ -195,9 +195,9 @@ parseAttribute = do
   maybeMatch <- optional parseMatch
   return $ case maybeMatch of
     Nothing -> SimpleAttrib ident
-    Just (Prefix, attr) -> (PrefixAttrib ident attr)
-    Just (Suffix, attr) -> (SuffixAttrib ident attr)
-    Just (Substring, attr) -> (SubstringAttrib ident attr)
-    Just (Equals, attr) -> (EqualsAttrib ident attr)
-    Just (Include, attr) -> (IncludeAttrib ident attr)
-    Just (Dash, attr) -> (DashAttrib ident attr)
+    Just (Prefix, attr) -> PrefixAttrib ident attr
+    Just (Suffix, attr) -> SuffixAttrib ident attr
+    Just (Substring, attr) -> SubstringAttrib ident attr
+    Just (Equals, attr) -> EqualsAttrib ident attr
+    Just (Include, attr) -> IncludeAttrib ident attr
+    Just (Dash, attr) -> DashAttrib ident attr
