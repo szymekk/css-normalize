@@ -7,15 +7,13 @@ module Selectors
   )
 where
 
-import Balanced (nonBracket)
 import Control.Applicative hiding (many, some)
 import qualified Control.Monad.Combinators.NonEmpty as NE
 import Data.CSS.Syntax.Tokens as CSS
 import Data.Functor
 import Data.Set as Set
 import Data.Text
-import Parse (pIdent, skipWs)
-import Parser
+import Parse.Internal
 import Selectors.Types
 import Text.Megaparsec
 
@@ -68,9 +66,8 @@ parseSimpleSelector =
 
 -- | Parse a simple selector.
 parseNegation :: Parser Negation
-parseNegation = single Colon *> ((parseNot *> skipWs) *> parseNegationArg <* (skipWs <* single RightParen))
+parseNegation = single Colon *> betweenFunction "not" (betweenWs parseNegationArg)
   where
-    parseNot = single (Function "not")
     parseNegationArg =
       NegationTypeSelector <$> parseTypeSelector
         <|> NegationCommon <$> parseCommon
@@ -144,8 +141,6 @@ attributeMatchToConstructor Dash = DashAttribute
 parseAttribute :: Parser Attribute
 parseAttribute = betweenSquare parseAttribute'
   where
-    betweenSquare = between (single LeftSquareBracket) (single RightSquareBracket)
-    betweenWs = between skipWs skipWs
     parseAttribute' = do
       attribute <- betweenWs pIdent
       maybeValue <- optional $ (,) <$> parseMatchType <*> betweenWs pIdent

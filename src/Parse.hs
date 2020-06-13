@@ -13,8 +13,6 @@ module Parse
     parseSelector,
     parseSelectorsGroup,
     Parser,
-    skipWs,
-    pIdent,
   )
 where
 
@@ -24,13 +22,9 @@ import Data.CSS.Syntax.Tokens as CSS
 import Data.Functor
 import Data.Set as Set hiding (foldr, null)
 import Data.Text hiding (concat)
-import Parser
+import Parse.Internal
 import Text.Megaparsec
 import Types
-
--- | Skip and discard zero or more whitespace tokens.
-skipWs :: Parser ()
-skipWs = skipMany (single Whitespace)
 
 -- | Parse the value of a CSS declaration (i.e. the part after the colon).
 parseDeclarationValues :: Parser Balanced
@@ -41,13 +35,6 @@ parseDeclarationValues =
 
 pDeclarationSeparator :: Parser ()
 pDeclarationSeparator = void $ skipWs *> single Semicolon <* skipWs
-
--- | Parse an ident-token. Returns the ident's name.
-pIdent :: Parser Text
-pIdent = token test Set.empty <?> "ident"
-  where
-    test (Ident str) = Just str
-    test _ = Nothing
 
 -- | Parse a single CSS declaration.
 parseOneDeclaration :: Parser Declaration
@@ -90,7 +77,6 @@ parseBlockCurly =
   Block . unBalanced <$> betweenCurly manyBalanced
   where
     manyBalanced = someBalanced <|> return mempty
-    betweenCurly = between (single LeftCurlyBracket) (single RightCurlyBracket)
 
 pAtKeyword :: Parser Text
 pAtKeyword = token test Set.empty <?> "at-keyword"

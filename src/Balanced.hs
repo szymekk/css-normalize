@@ -6,7 +6,6 @@ module Balanced
     Balanced,
     someBalanced,
     manyBalancedTill,
-    nonBracket,
   )
 where
 
@@ -15,7 +14,7 @@ import Control.Monad
 import Data.CSS.Syntax.Tokens as CSS
 import Data.Set as Set
 import Data.Text
-import Parser
+import Parse.Internal
 import Text.Megaparsec
 import TokenStream ()
 
@@ -114,19 +113,6 @@ parseEnclosedWithBracketType = do
   let closingBracket = snd (getBracketPair bracketType)
   void $ single closingBracket
   return (bracketType, innerTokens)
-
--- | Parse a non-bracket-like token.
-nonBracket :: Parser CSS.Token
-nonBracket = token test Set.empty <?> "non-bracket"
-  where
-    test LeftCurlyBracket = Nothing
-    test RightCurlyBracket = Nothing
-    test LeftSquareBracket = Nothing
-    test RightSquareBracket = Nothing
-    test LeftParen = Nothing
-    test RightParen = Nothing
-    test (Function _) = Nothing
-    test t = Just t
 
 -- | Parse an opening bracket-like token.
 parseBracketOpen :: Parser BracketType
