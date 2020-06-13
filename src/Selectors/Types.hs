@@ -6,7 +6,7 @@ module Selectors.Types
     SimpleSelectorSeq (..),
     Common (..),
     SimpleSelector (..),
-    TypeSelector (..),
+    TypeLikeSelector (..),
     IdSelector (..),
     Class (..),
     Negation (..),
@@ -38,7 +38,7 @@ newtype Selector = Selector (SimpleSelectorSeq, [(Combinator, SimpleSelectorSeq)
 
 -- | A type representing simple selector sequence.
 data SimpleSelectorSeq
-  = SimpleSelectorSeq TypeSelector [SimpleSelector]
+  = SimpleSelectorSeq TypeLikeSelector [SimpleSelector]
   deriving (Eq, Show)
 
 -- | Common class for several simple selector types.
@@ -46,7 +46,7 @@ data Common = CommonId IdSelector | CommonClass Class | CommonAttribute Attribut
   deriving (Eq, Show)
 
 -- | A concrete type selector or a universal selector.
-data TypeSelector = TypeSelector Text | Universal
+data TypeLikeSelector = TypeSelector Text | Universal
   deriving (Eq, Show)
 
 -- | A simple selector making up 'SimpleSelectorSeq'.
@@ -60,7 +60,7 @@ newtype IdSelector = IdSelector Text deriving (Eq, Show)
 newtype Class = Class Text deriving (Eq, Show)
 
 -- | A negation pseudo-class selector.
-data Negation = NegationTypeSelector TypeSelector | NegationCommon Common
+data Negation = NegationTypeLike TypeLikeSelector | NegationCommon Common
   deriving (Eq, Show)
 
 -- | An attribute selector.

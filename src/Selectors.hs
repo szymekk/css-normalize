@@ -44,7 +44,7 @@ parseCombinator =
 -- | Parse a sequence of simple selectors.
 parseSimpleSelectorSeq :: Parser SimpleSelectorSeq
 parseSimpleSelectorSeq =
-  optional parseTypeSelector >>= \case
+  optional parseTypeLikeSelector >>= \case
     Just ts -> SimpleSelectorSeq ts <$> many parseSimpleSelector
     Nothing -> SimpleSelectorSeq Universal <$> some parseSimpleSelector
 
@@ -69,12 +69,12 @@ parseNegation :: Parser Negation
 parseNegation = single Colon *> functionParens "not" (betweenWs parseNegationArg)
   where
     parseNegationArg =
-      NegationTypeSelector <$> parseTypeSelector
+      NegationTypeLike <$> parseTypeLikeSelector
         <|> NegationCommon <$> parseCommon
 
 -- | Parse a type selector.
-parseTypeSelector :: Parser TypeSelector
-parseTypeSelector = Universal <$ single (Delim '*') <|> TypeSelector <$> pIdent
+parseTypeLikeSelector :: Parser TypeLikeSelector
+parseTypeLikeSelector = Universal <$ single (Delim '*') <|> TypeSelector <$> pIdent
 
 -- | Parse an ID selector.
 parseId :: Parser IdSelector
