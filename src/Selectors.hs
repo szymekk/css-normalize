@@ -10,49 +10,12 @@ import Balanced
 import qualified Control.Monad.Combinators.NonEmpty as NE
 import Data.CSS.Syntax.Tokens as CSS
 import Data.Functor
-import Data.List.NonEmpty
 import Data.Set as Set
 import Data.Text
 import Parse (pIdent, skipWs)
 import Parser
+import Selectors.Types
 import Text.Megaparsec
-
--- | A type representing CSS selectors.
-newtype SelectorsGroup = SelectorsGroup {unSelectorsGroup :: NonEmpty Selector}
-  deriving (Eq, Show)
-
-data Combinator = Plus | Greater | Tilde | Space
-  deriving (Eq, Show)
-
-newtype Selector = Selector (SimpleSelectorSeq, [(Combinator, SimpleSelectorSeq)])
-  deriving (Eq, Show)
-
-data SimpleSelectorSeq = WithTypeSelector (TypeSelector, [HCAPN]) | OnlyHCAPN (NonEmpty HCAPN)
-  deriving (Eq, Show)
-
-data HCAPN = HCAPN'IS IdSelector | HCAPN'CS Class | HCAPN'AS Attrib | HCAPN'PS Pseudo | HCAPN'NS Negation
-  deriving (Eq, Show)
-
-data TypeSelector = TypeSelector Text | Universal
-  deriving (Eq, Show)
-
-{-
-simple_selector_sequence
-  : [ type_selector | universal ]
-    [ HASH | class | attrib | pseudo | negation ]*
-  | [ HASH | class | attrib | pseudo | negation ]+
-  ;
--}
-
-data Attrib
-  = SimpleAttrib Text
-  | PrefixAttrib Text Text
-  | SuffixAttrib Text Text
-  | SubstringAttrib Text Text
-  | EqualsAttrib Text Text
-  | IncludeAttrib Text Text
-  | DashAttrib Text Text
-  deriving (Eq, Show)
 
 parseSelectorsGroup :: Parser SelectorsGroup
 parseSelectorsGroup = fmap SelectorsGroup $ parseSelector `NE.sepBy1` single Comma
@@ -75,32 +38,30 @@ parseCombinator =
 
 parseSimpleSelectorSeq :: Parser SimpleSelectorSeq
 parseSimpleSelectorSeq =
-  fmap WithTypeSelector ((,) <$> pTypeSelector <*> many parseHCAPN)
-    <|> OnlyHCAPN <$> NE.some parseHCAPN
+  fmap WithTypeSelector ((,) <$> pTypeSelector <*> many parseSimpleSelector)
+    <|> OnlySimpleSelectors <$> NE.some parseSimpleSelector
 
-parseHCAPN :: Parser HCAPN
-parseHCAPN =
-  HCAPN'IS <$> pId
-    <|> HCAPN'CS <$> pClass
-    <|> HCAPN'AS <$> parseAttribute
-    <|> HCAPN'NS <$> pNegation
-    <|> HCAPN'PS <$> pPseudo
+pCommon :: Parser Common
+pCommon =
+  choice
+    [ CommonClass <$> pClass,
+      CommonAttrib <$> parseAttribute,
+      CommonId <$> pId,
+      CommonPseudo <$> pPseudo
+    ]
+
+parseSimpleSelector :: Parser SimpleSelector
+parseSimpleSelector =
+  CommonSelector <$> pCommon
+    <|> NegationSelector <$> pNegation
 
 pNegation :: Parser Negation
-pNegation = fmap Negation $ single Colon *> ((pNot *> skipWs) *> parseNegationArg <* (skipWs <* single RightParen))
+pNegation = single Colon *> ((pNot *> skipWs) *> parseNegationArg <* (skipWs <* single RightParen))
   where
     pNot = single (Function "not")
-
-parseNegationArg :: Parser NegationArg
-parseNegationArg =
-  TS <$> pTypeSelector
-    <|> IS <$> pId
-    <|> CS <$> pClass
-    <|> AS <$> parseAttribute
-    <|> PS <$> pPseudo
-
--- data NegationArg = TS TypeSelector | IS IdSelector | CS Class | AS Attrib | PS Pseudo
--- deriving (Eq, Show)
+    parseNegationArg =
+      NegationTypeSelector <$> pTypeSelector
+        <|> NegationCommon <$> pCommon
 
 pTypeSelector :: Parser TypeSelector
 pTypeSelector = Universal <$ single (Delim '*') <|> TypeSelector <$> pIdent
@@ -125,35 +86,10 @@ pPseudo = do
     Nothing -> PClass . PseudoClass <$> pPseudoBody
     Just _ -> PElement . PseudoElement <$> pPseudoBody
 
-data Pseudo = PElement PseudoElement | PClass PseudoClass
-  deriving (Eq, Show)
-
-data PseudoBody = IdentPseudo Text | FunctionalPseudo Text [CSS.Token]
-  deriving (Eq, Show)
-
-newtype PseudoElement = PseudoElement PseudoBody deriving (Eq, Show)
-
-newtype PseudoClass = PseudoClass PseudoBody deriving (Eq, Show)
-
 pPseudoBody :: Parser PseudoBody
 pPseudoBody =
   IdentPseudo <$> pIdent
     <|> FunctionalPseudo <$> pFunctionName <*> (skipWs *> someTill nonBracket (skipWs <* single RightParen))
-
-{-
-negation_arg
-  : type_selector | universal | HASH | class | attrib | pseudo
--}
-
--- data NegationArg = TypeSelector | Universal | Hash | Class | Attrib | Pseudo
-data NegationArg = TS TypeSelector | IS IdSelector | CS Class | AS Attrib | PS Pseudo
-  deriving (Eq, Show)
-
-newtype IdSelector = IdSelector Text deriving (Eq, Show)
-
-newtype Class = Class Text deriving (Eq, Show)
-
-newtype Negation = Negation NegationArg deriving (Eq, Show)
 
 ---
 -- parseSelector :: Parser Selector
