@@ -10,7 +10,7 @@ module Selectors.Types
     IdSelector (..),
     Class (..),
     Negation (..),
-    Attrib (..),
+    Attribute (..),
     Pseudo (..),
     PseudoBody (..),
     PseudoElement (..),
@@ -22,66 +22,68 @@ import Data.CSS.Syntax.Tokens as CSS
 import Data.List.NonEmpty
 import Data.Text
 
--- | A type representing CSS selectors.
+-- | A type representing a comma separated list of CSS selectors.
 newtype SelectorsGroup = SelectorsGroup {unSelectorsGroup :: NonEmpty Selector}
   deriving (Eq, Show)
 
+-- | A combinator appearing between simple selector sequences e.g. @+@ in
+-- @div + p@.
 data Combinator = Plus | Greater | Tilde | Space
   deriving (Eq, Show)
 
+-- | A type representing CSS selectors i.e. a list of 'SimpleSelectorSeq'
+-- separated by combinators.
 newtype Selector = Selector (SimpleSelectorSeq, [(Combinator, SimpleSelectorSeq)])
   deriving (Eq, Show)
 
+-- | A type representing simple selector sequence.
 data SimpleSelectorSeq
-  = WithTypeSelector (TypeSelector, [SimpleSelector])
-  | OnlySimpleSelectors (NonEmpty SimpleSelector)
+  = SimpleSelectorSeq TypeSelector [SimpleSelector]
   deriving (Eq, Show)
 
-data Common = CommonId IdSelector | CommonClass Class | CommonAttrib Attrib | CommonPseudo Pseudo
+-- | Common class for several simple selector types.
+data Common = CommonId IdSelector | CommonClass Class | CommonAttribute Attribute | CommonPseudo Pseudo
   deriving (Eq, Show)
 
-data SimpleSelector = CommonSelector Common | NegationSelector Negation
-  deriving (Eq, Show)
-
+-- | A concrete type selector or a universal selector.
 data TypeSelector = TypeSelector Text | Universal
   deriving (Eq, Show)
 
-{-
-negation_arg
-  : type_selector | universal | HASH | class | attrib | pseudo
--}
+-- | A simple selector making up 'SimpleSelectorSeq'.
+data SimpleSelector = CommonSimpleSelector Common | Not Negation
+  deriving (Eq, Show)
 
+-- | An ID selector.
 newtype IdSelector = IdSelector Text deriving (Eq, Show)
 
+-- | A class selector.
 newtype Class = Class Text deriving (Eq, Show)
 
+-- | A negation pseudo-class selector.
 data Negation = NegationTypeSelector TypeSelector | NegationCommon Common
   deriving (Eq, Show)
 
-{-
-simple_selector_sequence
-  : [ type_selector | universal ]
-    [ HASH | class | attrib | pseudo | negation ]*
-  | [ HASH | class | attrib | pseudo | negation ]+
-  ;
--}
-
-data Attrib
-  = SimpleAttrib Text
-  | PrefixAttrib Text Text
-  | SuffixAttrib Text Text
-  | SubstringAttrib Text Text
-  | EqualsAttrib Text Text
-  | IncludeAttrib Text Text
-  | DashAttrib Text Text
+-- | An attribute selector.
+data Attribute
+  = SimpleAttribute Text
+  | PrefixAttribute Text Text
+  | SuffixAttribute Text Text
+  | SubstringAttribute Text Text
+  | EqualsAttribute Text Text
+  | IncludeAttribute Text Text
+  | DashAttribute Text Text
   deriving (Eq, Show)
 
+-- | A pseudo-element or pseudo-class.
 data Pseudo = PElement PseudoElement | PClass PseudoClass
   deriving (Eq, Show)
 
+-- | Body of a pseudo-element or pseudo-class.
 data PseudoBody = IdentPseudo Text | FunctionalPseudo Text [CSS.Token]
   deriving (Eq, Show)
 
+-- | A pseudo-element.
 newtype PseudoElement = PseudoElement PseudoBody deriving (Eq, Show)
 
+-- | A pseudo-class.
 newtype PseudoClass = PseudoClass PseudoBody deriving (Eq, Show)

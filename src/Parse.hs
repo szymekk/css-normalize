@@ -42,6 +42,7 @@ parseDeclarationValues =
 pDeclarationSeparator :: Parser ()
 pDeclarationSeparator = void $ skipWs *> single Semicolon <* skipWs
 
+-- | Parse an ident-token. Returns the ident's name.
 pIdent :: Parser Text
 pIdent = token test Set.empty <?> "ident"
   where
