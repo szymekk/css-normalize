@@ -27,7 +27,7 @@ type Parser = Parsec Void [CSS.Token]
 skipWs :: Parser ()
 skipWs = skipMany (single Whitespace)
 
--- | Parse an ident-token. Returns the ident's name.
+-- | Parse an ident-token. Returns the ident-token's name.
 pIdent :: Parser Text
 pIdent = token test Set.empty <?> "ident"
   where
