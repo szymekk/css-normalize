@@ -6,6 +6,7 @@ module Balanced
     Balanced,
     someBalanced,
     manyBalancedTill,
+    nonBracket,
   )
 where
 

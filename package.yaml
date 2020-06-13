@@ -13,6 +13,7 @@ dependencies:
 - text
 - containers
 - optparse-applicative
+- parser-combinators
 
 library:
   source-dirs: src

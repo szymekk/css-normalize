@@ -13,6 +13,8 @@ module Parse
     parseSelector,
     parseSelectorsGroup,
     Parser,
+    skipWs,
+    pIdent,
   )
 where
 
