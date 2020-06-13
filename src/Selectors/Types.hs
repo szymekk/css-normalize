@@ -11,7 +11,6 @@ module Selectors.Types
     Class (..),
     Negation (..),
     Attribute (..),
-    Pseudo (..),
     PseudoBody (..),
     PseudoElement (..),
     PseudoClass (..),
@@ -42,7 +41,7 @@ data SimpleSelectorSeq
   deriving (Eq, Show)
 
 -- | Common class for several simple selector types.
-data Common = CommonId IdSelector | CommonClass Class | CommonAttribute Attribute | CommonPseudo Pseudo
+data Common = CommonId IdSelector | CommonClass Class | CommonAttribute Attribute | CommonPseudoElement PseudoElement | CommonPseudoClass PseudoClass
   deriving (Eq, Show)
 
 -- | A concrete type selector or a universal selector.
@@ -72,10 +71,6 @@ data Attribute
   | EqualsAttribute Text Text
   | IncludeAttribute Text Text
   | DashAttribute Text Text
-  deriving (Eq, Show)
-
--- | A pseudo-element or pseudo-class.
-data Pseudo = PElement PseudoElement | PClass PseudoClass
   deriving (Eq, Show)
 
 -- | Body of a pseudo-element or pseudo-class.

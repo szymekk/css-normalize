@@ -55,7 +55,8 @@ parseCommon =
     [ CommonClass <$> parseClass,
       CommonAttribute <$> parseAttribute,
       CommonId <$> parseId,
-      CommonPseudo <$> parsePseudo
+      CommonPseudoElement <$> parsePseudoElement,
+      CommonPseudoClass <$> parsePseudoClass
     ]
 
 -- | Parse a simple selector.
@@ -90,14 +91,13 @@ pHash = token test Set.empty <?> "hash"
 parseClass :: Parser Class
 parseClass = single (Delim '.') *> (Class <$> pIdent)
 
--- | Parse a pseudo-element or a pseudo-class.
-parsePseudo :: Parser Pseudo
-parsePseudo = do
-  void (single Colon)
-  maybeColon <- optional (void $ single Colon)
-  case maybeColon of
-    Nothing -> PClass . PseudoClass <$> parsePseudoBody
-    Just _ -> PElement . PseudoElement <$> parsePseudoBody
+-- | Parse a pseudo-class.
+parsePseudoClass :: Parser PseudoClass
+parsePseudoClass = single Colon *> (PseudoClass <$> parsePseudoBody)
+
+-- | Parse a pseudo-element.
+parsePseudoElement :: Parser PseudoElement
+parsePseudoElement = single Colon *> single Colon *> (PseudoElement <$> parsePseudoBody)
 
 -- | Parse the body of a pseudo selector.
 parsePseudoBody :: Parser PseudoBody
