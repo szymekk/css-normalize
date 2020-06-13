@@ -2,18 +2,18 @@
 
 -- | Type definitions for CSS selectors.
 module Selectors
-  ( parseSelectorsGroup
+  ( parseSelectorsGroup,
   )
 where
 
 import Balanced
 import qualified Control.Monad.Combinators.NonEmpty as NE
 import Data.CSS.Syntax.Tokens as CSS
-import Data.List.NonEmpty
 import Data.Functor
+import Data.List.NonEmpty
 import Data.Set as Set
 import Data.Text
-import Parse (skipWs, pIdent)
+import Parse (pIdent, skipWs)
 import Parser
 import Text.Megaparsec
 
@@ -44,7 +44,8 @@ simple_selector_sequence
   ;
 -}
 
-data Attrib = SimpleAttrib Text
+data Attrib
+  = SimpleAttrib Text
   | PrefixAttrib Text Text
   | SuffixAttrib Text Text
   | SubstringAttrib Text Text
@@ -66,39 +67,40 @@ parseSelector = do
 parseCombinator :: Parser Combinator
 parseCombinator =
   choice
-    [single (Delim '+') $> Plus,
-     single (Delim '>') $> Greater,
-     single (Delim '~') $> Tilde,
-     single Whitespace $> Space
+    [ single (Delim '+') $> Plus,
+      single (Delim '>') $> Greater,
+      single (Delim '~') $> Tilde,
+      single Whitespace $> Space
     ]
 
 parseSimpleSelectorSeq :: Parser SimpleSelectorSeq
-parseSimpleSelectorSeq = (fmap WithTypeSelector $ (,) <$> pTypeSelector <*> many parseHCAPN)
-  <|> OnlyHCAPN <$> NE.some parseHCAPN
+parseSimpleSelectorSeq =
+  (fmap WithTypeSelector $ (,) <$> pTypeSelector <*> many parseHCAPN)
+    <|> OnlyHCAPN <$> NE.some parseHCAPN
 
 parseHCAPN :: Parser HCAPN
-parseHCAPN = HCAPN'IS <$> pId
-  <|> HCAPN'CS <$> pClass
-  <|> HCAPN'AS <$> parseAttribute
-  <|> HCAPN'NS <$> pNegation
-  <|> HCAPN'PS <$> pPseudo
+parseHCAPN =
+  HCAPN'IS <$> pId
+    <|> HCAPN'CS <$> pClass
+    <|> HCAPN'AS <$> parseAttribute
+    <|> HCAPN'NS <$> pNegation
+    <|> HCAPN'PS <$> pPseudo
 
 pNegation :: Parser Negation
 pNegation = fmap Negation $ single Colon *> ((pNot *> skipWs) *> parseNegationArg <* (skipWs <* single RightParen))
   where
     pNot = single (Function "not")
 
-
 parseNegationArg :: Parser NegationArg
-parseNegationArg = TS <$> pTypeSelector
-  <|> IS <$> pId
-  <|> CS <$> pClass
-  <|> AS <$> parseAttribute
-  <|> PS <$> pPseudo
+parseNegationArg =
+  TS <$> pTypeSelector
+    <|> IS <$> pId
+    <|> CS <$> pClass
+    <|> AS <$> parseAttribute
+    <|> PS <$> pPseudo
 
 -- data NegationArg = TS TypeSelector | IS IdSelector | CS Class | AS Attrib | PS Pseudo
-  -- deriving (Eq, Show)
-
+-- deriving (Eq, Show)
 
 pTypeSelector :: Parser TypeSelector
 pTypeSelector = Universal <$ single (Delim '*') <|> TypeSelector <$> pIdent
@@ -130,11 +132,13 @@ data PseudoBody = IdentPseudo Text | FunctionalPseudo Text [CSS.Token]
   deriving (Eq, Show)
 
 data PseudoElement = PseudoElement PseudoBody deriving (Eq, Show)
+
 data PseudoClass = PseudoClass PseudoBody deriving (Eq, Show)
 
 pPseudoBody :: Parser PseudoBody
-pPseudoBody = IdentPseudo <$> pIdent
-  <|> FunctionalPseudo <$> pFunctionName <*> (skipWs *> someTill nonBracket (skipWs <* single RightParen))
+pPseudoBody =
+  IdentPseudo <$> pIdent
+    <|> FunctionalPseudo <$> pFunctionName <*> (skipWs *> someTill nonBracket (skipWs <* single RightParen))
 
 {-
 negation_arg
@@ -146,15 +150,17 @@ data NegationArg = TS TypeSelector | IS IdSelector | CS Class | AS Attrib | PS P
   deriving (Eq, Show)
 
 data IdSelector = IdSelector Text deriving (Eq, Show)
+
 data Class = Class Text deriving (Eq, Show)
+
 data Negation = Negation NegationArg deriving (Eq, Show)
 
 ---
 -- parseSelector :: Parser Selector
 -- parseSelector = fmap Selector $ skipWs *> someTill pSelectorToken (try pEnd)
-  -- where
-    -- pSelectorToken = noneOf [LeftCurlyBracket, RightCurlyBracket, Comma]
-    -- pEnd = skipWs <* notFollowedBy pSelectorToken
+-- where
+-- pSelectorToken = noneOf [LeftCurlyBracket, RightCurlyBracket, Comma]
+-- pEnd = skipWs <* notFollowedBy pSelectorToken
 ---
 
 pFunctionName :: Parser Text
@@ -172,12 +178,12 @@ parseMatch = (,) <$> parseMatchType <*> pIdent
     parseMatchType :: Parser MatchType
     parseMatchType =
       choice
-        [single PrefixMatch $> Prefix,
-         single SuffixMatch $> Suffix,
-         single SubstringMatch $> Substring,
-         single (Delim '=') $> Equals,
-         single IncludeMatch $> Include,
-         single DashMatch $> Dash
+        [ single PrefixMatch $> Prefix,
+          single SuffixMatch $> Suffix,
+          single SubstringMatch $> Substring,
+          single (Delim '=') $> Equals,
+          single IncludeMatch $> Include,
+          single DashMatch $> Dash
         ]
 
 parseAttribute :: Parser Attrib
