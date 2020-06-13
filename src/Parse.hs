@@ -74,7 +74,7 @@ parseDeclarationList = do
 -- Any inner bracket tokens must be properly balanced.
 parseBlockCurly :: Parser Block
 parseBlockCurly =
-  Block . unBalanced <$> betweenCurly manyBalanced
+  Block . unBalanced <$> curlyBraces manyBalanced
   where
     manyBalanced = someBalanced <|> return mempty
 

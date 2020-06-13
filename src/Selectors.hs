@@ -66,7 +66,7 @@ parseSimpleSelector =
 
 -- | Parse a simple selector.
 parseNegation :: Parser Negation
-parseNegation = single Colon *> betweenFunction "not" (betweenWs parseNegationArg)
+parseNegation = single Colon *> functionParens "not" (betweenWs parseNegationArg)
   where
     parseNegationArg =
       NegationTypeSelector <$> parseTypeSelector
@@ -139,7 +139,7 @@ attributeMatchToConstructor Dash = DashAttribute
 
 -- | Parse an attribute selector.
 parseAttribute :: Parser Attribute
-parseAttribute = betweenSquare parseAttribute'
+parseAttribute = squareBrackets parseAttribute'
   where
     parseAttribute' = do
       attribute <- betweenWs pIdent

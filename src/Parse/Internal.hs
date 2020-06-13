@@ -3,9 +3,9 @@
 -- | Parsing CSS files.
 module Parse.Internal
   ( Parser,
-    betweenCurly,
-    betweenFunction,
-    betweenSquare,
+    curlyBraces,
+    functionParens,
+    squareBrackets,
     betweenWs,
     nonBracket,
     skipWs,
@@ -53,17 +53,17 @@ nonBracket = token test Set.empty <?> "non-bracket"
 betweenWs :: Parser a -> Parser a
 betweenWs = between skipWs skipWs
 
--- | @betweenSquare p@ parses a 'LeftSquareBracket', followed by @p@ and
+-- | @squareBrackets p@ parses a 'LeftSquareBracket', followed by @p@ and
 -- 'RightSquareBracket'. Returns the value returned by @p@.
-betweenSquare :: Parser a -> Parser a
-betweenSquare = between (single LeftSquareBracket) (single RightSquareBracket)
+squareBrackets :: Parser a -> Parser a
+squareBrackets = between (single LeftSquareBracket) (single RightSquareBracket)
 
--- | @betweenCurly p@ parses a 'LeftCurlyBracket', followed by @p@ and
+-- | @curlyBraces p@ parses a 'LeftCurlyBracket', followed by @p@ and
 -- 'RightCurlyBracket'. Returns the value returned by @p@.
-betweenCurly :: Parser a -> Parser a
-betweenCurly = between (single LeftCurlyBracket) (single RightCurlyBracket)
+curlyBraces :: Parser a -> Parser a
+curlyBraces = between (single LeftCurlyBracket) (single RightCurlyBracket)
 
--- | @betweenFunction name p@ parses a function-token named @name@, followed
--- by @p@ and 'RightParen'. Returns the value returned by @p@.
-betweenFunction :: Text -> Parser a -> Parser a
-betweenFunction name = between (single (Function name)) (single RightParen)
+-- | @functionParens name p@ parses a function-token named @name@, followed by
+-- @p@ and 'RightParen'. Returns the value returned by @p@.
+functionParens :: Text -> Parser a -> Parser a
+functionParens name = between (single (Function name)) (single RightParen)
