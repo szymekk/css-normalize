@@ -48,16 +48,9 @@ parseSimpleSelectorSeq =
     Just ts -> SimpleSelectorSeq ts <$> many parseSimpleSelector
     Nothing -> SimpleSelectorSeq Universal <$> some parseSimpleSelector
 
--- | Parse several types of simple selectors.
-parseCommon :: Parser Common
-parseCommon =
-  choice
-    [ CommonClass <$> parseClass,
-      CommonAttribute <$> parseAttribute,
-      CommonId <$> parseId,
-      CommonPseudoElement <$> parsePseudoElement,
-      CommonPseudoClass <$> parsePseudoClass
-    ]
+-- | Parse a type selector.
+parseTypeLikeSelector :: Parser TypeLikeSelector
+parseTypeLikeSelector = Universal <$ single (Delim '*') <|> TypeSelector <$> pIdent
 
 -- | Parse a simple selector.
 parseSimpleSelector :: Parser SimpleSelector
@@ -73,9 +66,16 @@ parseNegation = single Colon *> functionParens "not" (betweenWs parseNegationArg
       NegationTypeLike <$> parseTypeLikeSelector
         <|> NegationCommon <$> parseCommon
 
--- | Parse a type selector.
-parseTypeLikeSelector :: Parser TypeLikeSelector
-parseTypeLikeSelector = Universal <$ single (Delim '*') <|> TypeSelector <$> pIdent
+-- | Parse several types of simple selectors.
+parseCommon :: Parser Common
+parseCommon =
+  choice
+    [ CommonClass <$> parseClass,
+      CommonAttribute <$> parseAttribute,
+      CommonId <$> parseId,
+      CommonPseudoElement <$> parsePseudoElement,
+      CommonPseudoClass <$> parsePseudoClass
+    ]
 
 -- | Parse an ID selector.
 parseId :: Parser IdSelector
@@ -90,27 +90,6 @@ pHash = token test Set.empty <?> "hash"
 -- | Parse a class selector.
 parseClass :: Parser Class
 parseClass = single (Delim '.') *> (Class <$> pIdent)
-
--- | Parse a pseudo-class.
-parsePseudoClass :: Parser PseudoClass
-parsePseudoClass = single Colon *> (PseudoClass <$> parsePseudoBody)
-
--- | Parse a pseudo-element.
-parsePseudoElement :: Parser PseudoElement
-parsePseudoElement = single Colon *> single Colon *> (PseudoElement <$> parsePseudoBody)
-
--- | Parse the body of a pseudo selector.
-parsePseudoBody :: Parser PseudoBody
-parsePseudoBody =
-  IdentPseudo <$> pIdent
-    <|> FunctionalPseudo <$> pFunctionName <*> (skipWs *> someTill nonBracket (skipWs <* single RightParen))
-
--- | Parse a function token. Returns the name of the function.
-pFunctionName :: Parser Text
-pFunctionName = token test Set.empty <?> "function"
-  where
-    test (Function name) = Just name
-    test _ = Nothing
 
 -- | Attribute selector matching type.
 data AttributeMatchType = Prefix | Suffix | Substring | Equals | Include | Dash
@@ -152,3 +131,24 @@ parseAttribute = squareBrackets parseAttribute'
                in attribCtor attribute value
           )
           maybeValue
+
+-- | Parse a pseudo-element.
+parsePseudoElement :: Parser PseudoElement
+parsePseudoElement = single Colon *> single Colon *> (PseudoElement <$> parsePseudoBody)
+
+-- | Parse a pseudo-class.
+parsePseudoClass :: Parser PseudoClass
+parsePseudoClass = single Colon *> (PseudoClass <$> parsePseudoBody)
+
+-- | Parse the body of a pseudo selector.
+parsePseudoBody :: Parser PseudoBody
+parsePseudoBody =
+  IdentPseudo <$> pIdent
+    <|> FunctionalPseudo <$> pFunctionName <*> (skipWs *> someTill nonBracket (skipWs <* single RightParen))
+
+-- | Parse a function token. Returns the name of the function.
+pFunctionName :: Parser Text
+pFunctionName = token test Set.empty <?> "function"
+  where
+    test (Function name) = Just name
+    test _ = Nothing
