@@ -1,7 +1,7 @@
 {-# LANGUAGE LambdaCase #-}
 {-# LANGUAGE OverloadedStrings #-}
 
--- | Type definitions for CSS selectors.
+-- | Parsing CSS selectors.
 module Selectors
   ( parseSelectorsGroup,
   )
