@@ -144,7 +144,7 @@ parsePseudoClass = single Colon *> (PseudoClass <$> parsePseudoBody)
 parsePseudoBody :: Parser PseudoBody
 parsePseudoBody =
   IdentPseudo <$> pIdent
-    <|> FunctionalPseudo <$> pFunctionName <*> (skipWs *> someTill nonBracket (skipWs <* single RightParen))
+    <|> FunctionalPseudo <$> pFunctionName <*> parseExpression
 
 -- | Parse a function token. Returns the name of the function.
 pFunctionName :: Parser Text
@@ -152,3 +152,20 @@ pFunctionName = token test Set.empty <?> "function"
   where
     test (Function name) = Just name
     test _ = Nothing
+
+-- | Parse an expression valid inside either a functional pseudo-class or
+-- a functional pseudo-element.
+parseExpression :: Parser [CSS.Token]
+parseExpression =
+  skipWs *> someTill parseExpressionToken (try (skipWs <* single RightParen))
+  where
+    parseExpressionToken = token test Set.empty <?> "expression token"
+    test x = case x of
+      Delim '+' -> Just x
+      Delim '-' -> Just x
+      Dimension {} -> Just x
+      Number {} -> Just x
+      String {} -> Just x
+      Ident {} -> Just x
+      Whitespace -> Just x
+      _ -> Nothing
