@@ -46,7 +46,7 @@ renderAtRule n atRule = case atRule of
     renderSemicolonAtRule m name ts =
       indent m <> "@" <> name <> serialize ts <> ";"
     renderMediaRule m prelude stylesheet =
-      indent m <> "@media " <> serialize prelude <> "{\n"
+      indent m <> "@media " <> serialize prelude <> " {\n"
         <> renderStylesheet (m + 1) stylesheet
         <> "\n"
         <> indent m
