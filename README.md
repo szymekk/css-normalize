@@ -11,8 +11,11 @@ Transformations applied include:
 
 - sorting properties by key within a style rule,
 - sorting selectors in a group of comma separated selectors,
-- adding leading zeros to floating point numeric literals (e.g changing `.5` to `0.5`)
-- applying uniform formatting
+- adding leading zeros to floating point numeric literals (e.g changing `.5` to `0.5`),
+- stripping leading plus sign from floating point numeric literals (e.g changing `+2.1` to `2.1`),
+- inserting omitted semicolons after trailing CSS properties,
+- using double quotes on all strings (e.g. changing `'a string'` to `"a string"`),
+- applying uniform formatting, including collapsing excessive whitespace, putting each property in a separate line, aligning indentation.
 
 ## Building
 
