@@ -19,6 +19,10 @@ import Data.Text
 import Parse.Internal
 import Selectors.Types
 import Text.Megaparsec
+-- import Text.Megaparsec.Debug (dbg)
+
+dbg :: Text -> a -> a
+dbg _ x = x
 
 -- | Parse a group of comma separated selectors.
 parseSelectorsGroup :: Parser SelectorsGroup
@@ -29,26 +33,27 @@ parseSelectorsGroup =
 -- | Parse a CSS selector.
 parseSelector :: Parser Selector
 parseSelector = do
-  first <- parseSimpleSelectorSeq
-  rest <- many . try $ (,) <$> parseCombinator <*> parseSimpleSelectorSeq
+  first <- dbg "first-seq" parseSimpleSelectorSeq
+  rest <- many . try $ (,) <$> parseCombinator <*> (dbg "next-seq" parseSimpleSelectorSeq)
   return $ Selector first rest
 
 -- | Parse a selector combinator.
 parseCombinator :: Parser Combinator
 parseCombinator =
-  choice
-    [ try (betweenWs (single (Delim '+'))) $> Plus,
-      try (betweenWs (single (Delim '>'))) $> Greater,
-      try (betweenWs (single (Delim '~'))) $> Tilde,
-      some (single Whitespace) $> Space
-    ]
-    <* skipWs
+  dbg "combinator" $
+    choice
+      [ try (betweenWs (single (Delim '+'))) $> Plus,
+        try (betweenWs (single (Delim '>'))) $> Greater,
+        try (betweenWs (single (Delim '~'))) $> Tilde,
+        some (single Whitespace) $> Space
+      ]
+      <* skipWs
 
 -- | Parse a sequence of simple selectors.
 parseSimpleSelectorSeq :: Parser SimpleSelectorSeq
 parseSimpleSelectorSeq =
   optional parseTypeLikeSelector >>= \case
-    Just ts -> SimpleSelectorSeq ts <$> many parseSimpleSelector
+    Just ts -> (SimpleSelectorSeq ts <$> many parseSimpleSelector)
     Nothing -> SimpleSelectorSeq Universal <$> some parseSimpleSelector
 
 -- | Parse a type selector.
