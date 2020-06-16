@@ -66,9 +66,10 @@ It demonstrates several of the implemented transformations.
 
 ```console
 $ cat input.css
-:lang(pl)::before,:lang(fr)::before {color
+     @media only
+ screen{  :lang(pl)::before,:lang(fr)::before {color
 :green ;display: block; font-size : large;content
-     :"string 1"}.b::before   ,
+ :"string 1"}}.b::before   ,
 .a::before{display      :block;color: blue ;
      font-size:
 large;
@@ -78,11 +79,13 @@ large;
    ;
         content:   'string 2'   ;   }
 $ cssn input.css
-:lang(fr)::before, :lang(pl)::before {
-    color: green;
-    content: "string 1";
-    display: block;
-    font-size: large;
+@media only screen {
+    :lang(fr)::before, :lang(pl)::before {
+        color: green;
+        content: "string 1";
+        display: block;
+        font-size: large;
+    }
 }
 .a::before, .b::before {
     color: blue;
