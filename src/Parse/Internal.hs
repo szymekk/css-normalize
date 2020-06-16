@@ -10,6 +10,7 @@ module Parse.Internal
     nonBracket,
     skipWs,
     pIdent,
+    pString,
   )
 where
 
@@ -32,6 +33,13 @@ pIdent :: Parser Text
 pIdent = token test Set.empty <?> "ident"
   where
     test (Ident str) = Just str
+    test _ = Nothing
+
+-- | Parse an ident-token. Returns the ident-token's name.
+pString :: Parser Text
+pString = token test Set.empty <?> "string"
+  where
+    test (String str) = Just str
     test _ = Nothing
 
 -- | Parse a non-bracket-like token.
