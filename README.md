@@ -57,3 +57,38 @@ Then compare the normalized files using a standart text comparison tool such as 
 ```console
 $ diff a.norm.css b.norm.css
 ```
+
+## Example output
+
+Here is an example showing the results of running CSS normalize on a messy CSS file.
+It demonstrates several of the implemented transformations.
+
+```console
+$ cat input.css
+:lang(pl)::before,:lang(fr)::before {color
+:green ;display: block; font-size : large;content
+     :"string 1"}.b::before   ,
+.a::before{display      :block;color: blue ;
+     font-size:
+large;
+
+         margin:-.1em
+   -0.1em +2px 2px
+   ;
+        content:   'string 2'   ;   }
+$ cssn input.css
+:lang(fr)::before, :lang(pl)::before {
+    color: green;
+    content: "string 1";
+    display: block;
+    font-size: large;
+}
+.a::before, .b::before {
+    color: blue;
+    content: "string 2";
+    display: block;
+    font-size: large;
+    margin: -0.1em -0.1em 2px 2px;
+}
+
+```
