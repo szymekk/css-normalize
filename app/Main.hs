@@ -43,7 +43,7 @@ processInput StdInput = do
     then
       handleParseResult . Failure $
         parserFailure pPrefs pInfo ShowHelpText mempty
-    else T.interact transformStylesheet'
+    else T.interact transformStylesheet' *> putStrLn ""
   where
     transformStylesheet' = transformStylesheet "<stdin>"
 
