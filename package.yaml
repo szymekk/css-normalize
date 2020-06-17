@@ -9,7 +9,7 @@ description:         Package for normalizing CSS files.
 dependencies:
 - base
 - css-syntax
-- megaparsec
+- megaparsec >= 7 && < 8
 - text
 - containers
 - optparse-applicative
