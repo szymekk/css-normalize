@@ -1,34 +1,30 @@
 import CommandLine
-import Control.Monad (join)
 import Data.CSS.Syntax.Tokens (tokenize)
 import Data.Text
 import qualified Data.Text.IO as T
 import Normalize
-import Options.Applicative as A
+import Options.Applicative
 import Parse
 import Render
 import System.IO
 import Text.Megaparsec (errorBundlePretty, parse)
 
 main :: IO ()
-main = join $ customExecParser pPrefs pInfo
+main = customExecParser pPrefs pInfo >>= processInput
 
 pPrefs :: ParserPrefs
 pPrefs = prefs showHelpOnError
 
-pInfo :: ParserInfo (IO ())
+pInfo :: ParserInfo Input
 pInfo =
   info
-    (helper <*> parser)
+    (helper <*> pInput)
     ( fullDesc
         <> header "CSS normalize - a tool for normalizing CSS files"
         <> progDesc
           "Normalize and pretty print a CSS stylesheet read from FILE. \
           \If no FILE, read standard input."
     )
-  where
-    parser :: A.Parser (IO ())
-    parser = processInput <$> pInput
 
 processInput :: Input -> IO ()
 processInput (FileInput filename) =
