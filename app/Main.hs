@@ -2,23 +2,29 @@ import CommandLine
 import Data.CSS.Syntax.Tokens (tokenize)
 import Data.Text
 import qualified Data.Text.IO as T
+import Data.Version (showVersion)
 import Normalize
 import Options.Applicative
 import Parse
+import Paths_css_normalize (version)
 import Render
 import System.IO
 import Text.Megaparsec (errorBundlePretty, parse)
 
 main :: IO ()
-main = customExecParser pPrefs pInfo >>= processInput
+main = do
+  cmd <- customExecParser pPrefs pInfo
+  case cmd of
+    VersionCommand -> putStrLn $ showVersion version
+    RunCommand input -> processInput input
 
 pPrefs :: ParserPrefs
 pPrefs = prefs showHelpOnError
 
-pInfo :: ParserInfo Input
+pInfo :: ParserInfo (Command Input)
 pInfo =
   info
-    (helper <*> pInput)
+    (helper <*> pCommand)
     ( fullDesc
         <> header "CSS normalize - a tool for normalizing CSS files"
         <> progDesc
