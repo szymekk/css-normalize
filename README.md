@@ -19,6 +19,8 @@ Transformations applied include:
 
 ## Building
 
+To build CSS normalize use `stack` as follows:
+
 ```console
 $ stack build
 ```
