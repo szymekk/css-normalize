@@ -1,7 +1,8 @@
 module CommandLine
-  ( Input (..),
-    Command (..),
-    pCommand,
+  ( Command (..),
+    Input (..),
+    cssnParseCommand,
+    cssnPrintHelpText,
   )
 where
 
@@ -11,8 +12,8 @@ data Input
   = FileInput FilePath
   | StdInput
 
-pInput :: Parser Input
-pInput = FileInput <$> argument str (metavar "FILE") <|> pure StdInput
+parseInputSource :: Parser Input
+parseInputSource = FileInput <$> argument str (metavar "FILE") <|> pure StdInput
 
 data Command a
   = VersionCommand
@@ -20,13 +21,36 @@ data Command a
   deriving (Eq, Show)
 
 -- | Turn a Parser for a command of type a into a command with a version flag.
-mkCommand :: Parser a -> Parser (Command a)
-mkCommand commandParser =
+withVersionCommand :: Parser a -> Parser (Command a)
+withVersionCommand commandParser =
   VersionCommand <$ versionFlag
     <|> RunCommand <$> commandParser
+  where
+    versionFlag :: Parser ()
+    versionFlag = flag' () (long "version" <> help "Show version")
 
-versionFlag :: Parser ()
-versionFlag = flag' () (long "version" <> help "Show version")
+cssnInfo :: ParserInfo (Command Input)
+cssnInfo =
+  info
+    (helper <*> parser)
+    ( fullDesc
+        <> header "CSS normalize - a tool for normalizing CSS files"
+        <> progDesc
+          "Normalize and pretty print a CSS stylesheet read from FILE. \
+          \If no FILE, read standard input."
+    )
+  where
+    parser = withVersionCommand parseInputSource
 
-pCommand :: Parser (Command Input)
-pCommand = mkCommand pInput
+cssnPrintHelpText :: IO ()
+cssnPrintHelpText = printHelpText cssnParserPrefs cssnInfo
+
+printHelpText :: ParserPrefs -> ParserInfo a1 -> IO a2
+printHelpText pPrefs pInfo =
+  handleParseResult . Failure $ parserFailure pPrefs pInfo ShowHelpText mempty
+
+cssnParserPrefs :: ParserPrefs
+cssnParserPrefs = prefs showHelpOnError
+
+cssnParseCommand :: IO (Command Input)
+cssnParseCommand = customExecParser cssnParserPrefs cssnInfo
