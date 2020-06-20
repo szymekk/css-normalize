@@ -37,7 +37,7 @@ cssnInfo =
         <> header "CSS normalize - a tool for normalizing CSS files"
         <> progDesc
           "Normalize and pretty print a CSS stylesheet read from FILE. \
-          \If no FILE, read standard input."
+          \With no FILE, read standard input."
     )
   where
     parser = withVersionCommand parseInputSource
